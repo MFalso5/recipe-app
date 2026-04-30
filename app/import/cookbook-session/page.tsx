@@ -135,8 +135,35 @@ export default function CookbookSessionPage() {
     updateItem(item.id, { status: 'parsing' })
     try {
       const fd = new FormData()
-      item.files.forEach(f => fd.append('images', f))
-      fd.append('page_count', String(item.files.length))
+
+      // Compress and convert all images (handles HEIC on mobile)
+      const compressed = await Promise.all(item.files.map(async (f) => {
+        return new Promise<File>((resolve) => {
+          const img = new Image()
+          const url = URL.createObjectURL(f)
+          img.onload = () => {
+            URL.revokeObjectURL(url)
+            const canvas = document.createElement('canvas')
+            let { width, height } = img
+            const maxDim = 1600
+            if (width > maxDim || height > maxDim) {
+              if (width > height) { height = Math.round(height * maxDim / width); width = maxDim }
+              else { width = Math.round(width * maxDim / height); height = maxDim }
+            }
+            canvas.width = width; canvas.height = height
+            const ctx = canvas.getContext('2d')
+            if (ctx) ctx.drawImage(img, 0, 0, width, height)
+            canvas.toBlob(blob => {
+              resolve(blob ? new File([blob], 'photo.jpg', { type: 'image/jpeg' }) : f)
+            }, 'image/jpeg', 0.85)
+          }
+          img.onerror = () => { URL.revokeObjectURL(url); resolve(f) }
+          img.src = url
+        })
+      }))
+
+      compressed.forEach(f => fd.append('images', f))
+      fd.append('page_count', String(compressed.length))
       const res = await fetch('/api/parse-image', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error || 'Parse failed')
