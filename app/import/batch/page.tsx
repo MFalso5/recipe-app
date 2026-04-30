@@ -109,21 +109,12 @@ function BatchImportPageInner() {
           : defaultSource || (dr.source as string)
         updateItem(item.id, {
           status: 'review',
-          recipe: Object.assign({}, dr, {
-            image_url: heroUrl,
-            source: src,
-            source_type: ((!dr.source || dr.source === 'Unknown Source') && defaultSource) ? defaultSourceType : (dr.source_type || 'other'),
-            id: crypto.randomUUID(),
-            made: false,
-            made_log: [],
-            gallery_urls: galleryImages,
-            dietary_tags: (dr.dietary_tags as string[]) || [],
-            collections: [],
-            tags: (dr.tags as string[]) || [],
-            share_token: null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
+          recipe: { ...dr, image_url: heroUrl, source: src,
+            source_type: (defaultSource && (!dr.source || dr.source === 'Unknown Source') ? defaultSourceType : (dr.source_type as string || 'other')) as 'cookbook' | 'website' | 'other',
+            id: crypto.randomUUID(), made: false, made_log: [], gallery_urls: galleryImages,
+            dietary_tags: (dr.dietary_tags as string[]) || [], collections: [], tags: (dr.tags as string[]) || [],
+            share_token: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+          } as Partial<Recipe>
         })
         setActiveId(item.id)
         return
@@ -152,20 +143,12 @@ function BatchImportPageInner() {
 
       updateItem(item.id, {
         status: 'review',
-        recipe: Object.assign({}, dr, {
-          source: src,
-          source_type: ((!dr.source || dr.source === 'Unknown Source') && defaultSource) ? defaultSourceType : (dr.source_type || 'other'),
-          id: crypto.randomUUID(),
-          made: false,
-          made_log: [],
-          gallery_urls: [],
-          dietary_tags: (dr.dietary_tags as string[]) || [],
-          collections: [],
-          tags: (dr.tags as string[]) || [],
-          share_token: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+        recipe: { ...dr, source: src,
+          source_type: (defaultSource && (!dr.source || dr.source === 'Unknown Source') ? defaultSourceType : (dr.source_type as string || 'other')) as 'cookbook' | 'website' | 'other',
+          id: crypto.randomUUID(), made: false, made_log: [], gallery_urls: [],
+          dietary_tags: (dr.dietary_tags as string[]) || [], collections: [], tags: (dr.tags as string[]) || [],
+          share_token: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString()
+        } as Partial<Recipe>
       })
       setActiveId(item.id)
     } catch (err: unknown) {
