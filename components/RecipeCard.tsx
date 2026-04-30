@@ -77,7 +77,7 @@ Please give me 3-5 specific, practical suggestions for improving this recipe bas
   )
 }
 
-export default function RecipeCard({ recipe: r, onToggleMade, onUpdateLog, onUpdateIngredientNote, onUpdateStepNote, onUpdateStepPhoto, printMode }: Props) {
+export default function RecipeCard({ recipe: r, onToggleMade, onUpdateLog, onUpdateFavorite, onUpdateIngredientNote, onUpdateStepNote, onUpdateStepPhoto, printMode }: Props) {
   const [made, setMade] = useState(r.made)
   const [favorited, setFavorited] = useState(r.favorited || false)
   const [log, setLog] = useState<MadeItEntry[]>(r.made_log || [])
