@@ -60,6 +60,7 @@ export default function CookbookSessionPage() {
         id: title.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         name: title.trim(),
         author: author.trim() || null,
+        pub_year: pubYear.trim() || null,
         cover_url: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
