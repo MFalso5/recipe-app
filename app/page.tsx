@@ -411,12 +411,13 @@ export default function Home() {
                             name={editingCookbook}
                             cookbook={cb}
                             onClose={() => setEditingCookbook(null)}
-                            onSave={async (author: string, coverUrl: string | null) => {
+                            onSave={async (author: string, coverUrl: string | null, pubYear: string | null) => {
                               const updated: Cookbook = {
                                 id: editingCookbook.toLowerCase().replace(/[^a-z0-9]/g, '-'),
                                 name: editingCookbook,
                                 author: author || null,
                                 cover_url: coverUrl,
+                                pub_year: pubYear,
                                 created_at: cb?.created_at || new Date().toISOString(),
                                 updated_at: new Date().toISOString()
                               }
@@ -471,7 +472,8 @@ export default function Home() {
                       <div style={{ flex: 1 }}>
                         <button onClick={() => { setActiveCollection(null); setSearch('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 13, padding: 0, marginBottom: 8, fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 4 }}>← Back to Collections</button>
                         <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 24, fontWeight: 700, marginBottom: 3 }}>{activeCollection.name}</h2>
-                        {cb?.author && <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', marginBottom: 6 }}>{cb.author}</p>}
+                        {cb?.author && <p style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic', marginBottom: 4 }}>{cb.author}</p>}
+                        {cb?.pub_year && <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>{cb.pub_year}</p>}
                         <p style={{ fontSize: 13, color: 'var(--muted)' }}>{activeCollection.recipes.length} recipes · {activeCollection.recipes.filter(r => r.made).length} made</p>
                       </div>
                       {activeCollection.source_type === 'cookbook' && (
@@ -545,7 +547,8 @@ function CookbookCard({ collection, cookbook, onClick, onEdit }: { collection: C
       </div>
       <div onClick={onClick} style={{ padding: '12px 14px 14px' }}>
         <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 15, fontWeight: 600, lineHeight: 1.3, marginBottom: 3 }}>{collection.name}</div>
-        {cookbook?.author && <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 5, fontStyle: 'italic' }}>{cookbook.author}</div>}
+        {cookbook?.author && <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 3, fontStyle: 'italic' }}>{cookbook.author}</div>}
+        {cookbook?.pub_year && <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 5 }}>{cookbook.pub_year}</div>}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)' }}>
           <span>{collection.recipes.length} {collection.recipes.length === 1 ? 'recipe' : 'recipes'}</span>
           {madeCount > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}>✓ {madeCount} made</span>}
@@ -555,9 +558,11 @@ function CookbookCard({ collection, cookbook, onClick, onEdit }: { collection: C
   )
 }
 
-function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, cookbook: Cookbook | undefined, onSave: (author: string, coverUrl: string | null) => void, onClose: () => void }) {
+function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, cookbook: Cookbook | undefined, onSave: (author: string, coverUrl: string | null, pubYear: string | null) => void, onClose: () => void }) {
   const [author, setAuthor] = React.useState(cookbook?.author || '')
+  const [pubYear, setPubYear] = React.useState(cookbook?.pub_year || '')
   const [coverUrl, setCoverUrl] = React.useState(cookbook?.cover_url || '')
+  const [pubYear, setPubYear] = React.useState(cookbook?.pub_year || '')
   const [uploading, setUploading] = React.useState(false)
   const fileRef = React.useRef<HTMLInputElement>(null)
 
@@ -584,6 +589,14 @@ function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, 
             <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Author(s)</label>
             <input className="input" value={author} onChange={e => setAuthor(e.target.value)} placeholder="e.g. Emily and Melissa Elsen" />
           </div>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Publication Year</label>
+            <input className="input" value={pubYear} onChange={e => setPubYear(e.target.value)} placeholder="e.g. 2013" />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Publication Year</label>
+            <input className="input" value={pubYear} onChange={e => setPubYear(e.target.value)} placeholder="e.g. 2013" />
+          </div>
 
           <div>
             <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Cover Photo</label>
@@ -607,7 +620,7 @@ function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, 
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 24 }}>
           <button onClick={onClose} className="btn btn-ghost">Cancel</button>
-          <button onClick={() => onSave(author, coverUrl || null)} className="btn btn-green">Save</button>
+          <button onClick={() => onSave(author, coverUrl || null, pubYear || null)} className="btn btn-green">Save</button>
         </div>
       </div>
     </div>

@@ -188,7 +188,9 @@ export interface Cookbook {
   id: string
   name: string
   author: string | null
+  pub_year: string | null
   cover_url: string | null
+  pub_year: string | null
   created_at: string
   updated_at: string
 }
