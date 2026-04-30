@@ -58,6 +58,7 @@ export interface Recipe {
   source_type: 'cookbook' | 'website' | 'other'
   cookbook_author: string | null
   cookbook_cover_url: string | null
+  favorited: boolean
   share_token: string | null
   created_at: string
   updated_at: string
@@ -97,6 +98,7 @@ export interface Menu {
   source_type: 'cookbook' | 'website' | 'other'
   cookbook_author: string | null
   cookbook_cover_url: string | null
+  favorited: boolean
   share_token: string | null
   created_at: string
   updated_at: string

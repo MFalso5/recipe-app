@@ -27,6 +27,7 @@ export default function Home() {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('recent')
   const [filterOpen, setFilterOpen] = useState(false)
+  const [favoritesOnly, setFavoritesOnly] = useState(false)
   const [smartSearch, setSmartSearch] = useState('')
   const [smartResults, setSmartResults] = useState<string[] | null>(null)
   const [smartLoading, setSmartLoading] = useState(false)
@@ -105,6 +106,7 @@ export default function Home() {
   }
 
   const filterRecipesWithFilters = (list: Recipe[]) => list.filter(r => {
+    if (favoritesOnly && !r.favorited) return false
     const q = search.toLowerCase()
     const matchSearch = !q || r.title.toLowerCase().includes(q) || (r.source || '').toLowerCase().includes(q) ||
       (r.tags || []).some(t => t.toLowerCase().includes(q)) ||
@@ -201,6 +203,15 @@ export default function Home() {
                 <option value="made">Made first</option>
               </select>
             )}
+            <button onClick={() => setFavoritesOnly(f => !f)} style={{
+              display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px',
+              background: favoritesOnly ? '#FEF9C3' : 'var(--card)',
+              border: '0.5px solid ' + (favoritesOnly ? '#FDE047' : 'var(--border)'),
+              borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
+              color: favoritesOnly ? '#854D0E' : 'var(--muted)', fontWeight: favoritesOnly ? 600 : 400, flexShrink: 0
+            }}>
+              {favoritesOnly ? '★ Favorites' : '☆ Favorites'}
+            </button>
             <button onClick={() => { setSmartMode(!smartMode); clearSmartSearch() }} style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px',
               background: smartMode ? 'var(--accent-bg)' : 'var(--card)',
@@ -657,6 +668,7 @@ function RecipeGrid({ recipes }: { recipes: Recipe[] }) {
             {r.image_url ? <img className="lib-card-img" src={r.image_url} alt={r.title} /> : <div className="lib-card-placeholder">🍽️</div>}
             <div className="lib-card-body">
               <div className="lib-card-tags">
+                {r.favorited && <span style={{ fontSize: 12, color: '#854D0E' }}>★</span>}
                 {r.made && (() => {
                   const lastEntry = (r.made_log || [])[0]
                   const ratingColors: Record<string, string> = { 'would-make-again': 'var(--green)', 'make-with-changes': 'var(--accent)', 'wouldnt-make-again': '#ef4444' }

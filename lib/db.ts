@@ -32,6 +32,7 @@ function migrateRecipe(data: unknown): Recipe {
     page_number: (r.page_number as string) || null,
     collections: (r.collections as string[]) || [],
     source_type: (r.source_type as string) || (r.page_number ? 'cookbook' : r.source_url ? 'website' : 'other'),
+    favorited: (r.favorited as boolean) || false,
     share_token: (r.share_token as string) || null,
     cookbook_author: (r.cookbook_author as string) || null,
     cookbook_cover_url: (r.cookbook_cover_url as string) || null,

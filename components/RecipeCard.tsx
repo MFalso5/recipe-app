@@ -8,6 +8,7 @@ interface Props {
   recipe: Recipe
   onToggleMade?: () => void
   onUpdateLog?: (log: MadeItEntry[]) => void
+  onUpdateFavorite?: (favorited: boolean) => void
   onUpdateIngredientNote?: (gi: number, ii: number, note: string) => void
   onUpdateStepNote?: (gi: number, si: number, note: string) => void
   onUpdateStepPhoto?: (gi: number, si: number, url: string) => void
@@ -78,6 +79,7 @@ Please give me 3-5 specific, practical suggestions for improving this recipe bas
 
 export default function RecipeCard({ recipe: r, onToggleMade, onUpdateLog, onUpdateIngredientNote, onUpdateStepNote, onUpdateStepPhoto, printMode }: Props) {
   const [made, setMade] = useState(r.made)
+  const [favorited, setFavorited] = useState(r.favorited || false)
   const [log, setLog] = useState<MadeItEntry[]>(r.made_log || [])
   const [showLogForm, setShowLogForm] = useState(false)
   const [logNote, setLogNote] = useState('')
@@ -85,6 +87,12 @@ export default function RecipeCard({ recipe: r, onToggleMade, onUpdateLog, onUpd
   const [editingIngNote, setEditingIngNote] = useState<string | null>(null)
   const [editingStepNote, setEditingStepNote] = useState<string | null>(null)
   const [heroImg, setHeroImg] = useState(r.image_url)
+
+  const handleFavorite = () => {
+    const next = !favorited
+    setFavorited(next)
+    onUpdateFavorite?.(next)
+  }
 
   const handleMade = () => {
     const next = !made
