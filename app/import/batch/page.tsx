@@ -248,27 +248,24 @@ function BatchImportPageInner() {
           body: JSON.stringify({ url: item.url })
         })
       } else {
-      const isDoc = item.files.some(f => !f.type.startsWith('image/'))
+        const isDoc = item.files.some(f => !f.type.startsWith('image/'))
 
-      if (isDoc) {
-        const fd = new FormData()
-        item.files.forEach(f => fd.append('documents', f))
-        res = await parseWithRetry(fd, '/api/parse-document')
-      } else {
-        const fd = new FormData()
-        const compressed = await Promise.all(item.files.map(f => compressImage(f)))
-
-        // Find the best image for hero - prefer non-text pages (larger images)
-        const heroFile = compressed.reduce((best, f) => f.size > best.size ? f : best, compressed[0])
-        let heroUrl: string | null = null
-        try { heroUrl = await uploadImageToBlob(heroFile) } catch { /* non-fatal */ }
-        if (heroUrl) fd.append('hero_image_url', heroUrl)
-
-        compressed.forEach(f => fd.append('images', f))
-        fd.append('page_count', String(item.files.length))
-        res = await parseWithRetry(fd, '/api/parse-image')
+        if (isDoc) {
+          const fd = new FormData()
+          item.files.forEach(f => fd.append('documents', f))
+          res = await parseWithRetry(fd, '/api/parse-document')
+        } else {
+          const fd = new FormData()
+          const compressed = await Promise.all(item.files.map(f => compressImage(f)))
+          const heroFile = compressed.reduce((best, f) => f.size > best.size ? f : best, compressed[0])
+          let heroUrl: string | null = null
+          try { heroUrl = await uploadImageToBlob(heroFile) } catch { /* non-fatal */ }
+          if (heroUrl) fd.append('hero_image_url', heroUrl)
+          compressed.forEach(f => fd.append('images', f))
+          fd.append('page_count', String(item.files.length))
+          res = await parseWithRetry(fd, '/api/parse-image')
+        }
       }
-      } // end url else
 
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error || 'Parse failed')
