@@ -334,7 +334,7 @@ function BatchImportPageInner() {
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px 80px' }}>
 
-      <div style={{ padding: '24px 0 20px', borderBottom: '1px solid var(--border)', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ padding: '24px 0 20px', borderBottom: '1px solid var(--border)', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 28, fontWeight: 700 }}>Batch Import</h1>
           <p style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>Upload multiple recipes at once — photos, PDFs, or Word documents</p>
@@ -344,6 +344,20 @@ function BatchImportPageInner() {
           <Link href="/" className="btn btn-ghost btn-sm">← Library</Link>
         </div>
       </div>
+
+      {/* COOKBOOK SESSION BANNER */}
+      <Link href="/import/cookbook-session" style={{ textDecoration: 'none', display: 'block', marginBottom: 20 }}>
+        <div style={{ background: 'linear-gradient(135deg, var(--accent) 0%, #1e40af 100%)', borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14, cursor: 'pointer', transition: 'transform .15s, box-shadow .15s', boxShadow: '0 4px 16px rgba(29,78,216,.2)' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(29,78,216,.3)' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(29,78,216,.2)' }}>
+          <div style={{ fontSize: 36 }}>📚</div>
+          <div>
+            <div style={{ color: '#fff', fontWeight: 600, fontSize: 16, marginBottom: 3 }}>Cookbook Import Session</div>
+            <div style={{ color: 'rgba(255,255,255,.8)', fontSize: 13 }}>Set book details once, then photograph recipes one by one</div>
+          </div>
+          <div style={{ marginLeft: 'auto', color: 'rgba(255,255,255,.8)', fontSize: 20 }}>→</div>
+        </div>
+      </Link>
 
       <div style={{ display: 'grid', gridTemplateColumns: items.length > 0 ? '300px 1fr' : '1fr', gap: 20 }}>
 
