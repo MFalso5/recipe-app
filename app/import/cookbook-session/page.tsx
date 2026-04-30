@@ -431,10 +431,15 @@ export default function CookbookSessionPage() {
 
             {/* DONE / CONTINUE LATER */}
             {queue.length > 0 && (
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <Link href="/" className="btn btn-ghost" style={{ flex: 1, textAlign: 'center', padding: '12px' }}>
-                  Done for now →
+                  Done for now
                 </Link>
+                {queue.filter(i => i.status === 'review').length > 0 && (
+                  <button onClick={() => saveDraft(queue)} style={{ flex: 1, padding: '12px', background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 12, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 500, color: '#854D0E' }}>
+                    {draftSaved ? 'Saved!' : 'Save draft'}
+                  </button>
+                )}
                 {savedCount > 0 && (
                   <Link href={'/?source=' + encodeURIComponent(cookbookTitle)} className="btn btn-primary" style={{ flex: 1, textAlign: 'center', padding: '12px' }}>
                     View in Library
