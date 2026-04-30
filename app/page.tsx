@@ -562,7 +562,6 @@ function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, 
   const [author, setAuthor] = React.useState(cookbook?.author || '')
   const [pubYear, setPubYear] = React.useState(cookbook?.pub_year || '')
   const [coverUrl, setCoverUrl] = React.useState(cookbook?.cover_url || '')
-  const [pubYear, setPubYear] = React.useState(cookbook?.pub_year || '')
   const [uploading, setUploading] = React.useState(false)
   const fileRef = React.useRef<HTMLInputElement>(null)
 
