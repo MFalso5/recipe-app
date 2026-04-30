@@ -257,7 +257,7 @@ function BatchImportPageInner() {
         const fd = new FormData()
         const compressed = await Promise.all(item.files.map(f => compressImage(f)))
 
-        // Find the best image for hero — prefer non-text pages (larger images)
+        // Find the best image for hero - prefer non-text pages (larger images)
         const heroFile = compressed.reduce((best, f) => f.size > best.size ? f : best, compressed[0])
         let heroUrl: string | null = null
         try { heroUrl = await uploadImageToBlob(heroFile) } catch { /* non-fatal */ }
@@ -328,8 +328,8 @@ function BatchImportPageInner() {
   const savedCount = items.filter(i => i.status === 'saved').length
   const activeItem = items.find(i => i.id === activeId)
 
-  const statusColor = (s: BatchItem['status']) => ({ saved: 'var(--green)', error: 'var(--red)', review: 'var(--accent)', parsing: 'var(--muted)', saving: 'var(--muted)', pending: 'var(--border)' }[s])
-  const statusLabel = (s: BatchItem['status'], pages: number) => ({ saved: '✓ Saved', error: '✕ Error', review: '• Review', parsing: '... Parsing', saving: '... Saving', pending: pages > 1 ? pages + ' pages' : 'Pending' }[s])
+  const statusColor = (s: BatchItem['status']) => ({ saved: 'var(--green)', error: 'var(--red)', review: 'var(--accent)', parsing: 'var(--muted)', saving: 'var(--muted)', pending: 'var(--muted)' }[s])
+  const statusLabel = (s: BatchItem['status'], pages: number) => ({ saved: 'Saved', error: 'Error', review: 'Review', parsing: 'Parsing...', saving: 'Saving...', pending: pages > 1 ? pages + ' pages' : 'Pending' }[s])
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px 80px' }}>
@@ -337,7 +337,7 @@ function BatchImportPageInner() {
       <div style={{ padding: '24px 0 20px', borderBottom: '1px solid var(--border)', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 28, fontWeight: 700 }}>Batch Import</h1>
-          <p style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>Upload multiple recipes at once — photos, PDFs, or Word documents</p>
+          <p style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>Upload multiple recipes at once - photos, PDFs, or Word documents</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href="/import" className="btn btn-ghost btn-sm">Single import</Link>
@@ -407,7 +407,7 @@ function BatchImportPageInner() {
                         if (lines.length > 1) { e.preventDefault(); const n = [...urlInputs]; n.splice(i, 1, ...lines); setUrlInputs([...n, '']) }
                       }}
                     />
-                    <button onClick={() => setUrlInputs(p => p.length === 1 ? [''] : p.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14, flexShrink: 0 }}>✕</button>
+                    <button onClick={() => setUrlInputs(p => p.length === 1 ? [''] : p.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14, flexShrink: 0 }}>x</button>
                   </div>
                 ))}
               </div>
@@ -481,12 +481,12 @@ function BatchImportPageInner() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {pendingCount > 0 && (
                   <button onClick={parseAll} disabled={processing} className="btn btn-primary" style={{ width: '100%' }}>
-                    {processing ? '⟳ Parsing...' : '✨ Parse All ' + pendingCount + ' Recipe' + (pendingCount !== 1 ? 's' : '')}
+                    {processing ? '... Parsing...' : '✨ Parse All ' + pendingCount + ' Recipe' + (pendingCount !== 1 ? 's' : '')}
                   </button>
                 )}
                 {reviewCount > 0 && (
                   <button onClick={saveAll} className="btn btn-green" style={{ width: '100%' }}>
-                    ✓ Save All {reviewCount} Recipe{reviewCount !== 1 ? 's' : ''}
+                    v Save All {reviewCount} Recipe{reviewCount !== 1 ? 's' : ''}
                   </button>
                 )}
                 {savedCount === items.length && savedCount > 0 && (
@@ -540,14 +540,14 @@ function BatchImportPageInner() {
                   {item.status === 'review' && <button onClick={() => saveItem(item.id)} style={{ background: 'var(--green)', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 8px', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Save</button>}
                   {item.status === 'error' && <button onClick={() => parseItem(item)} style={{ background: 'var(--tag)', color: 'var(--ink)', border: '1px solid var(--border)', borderRadius: 6, padding: '4px 8px', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>Retry</button>}
                   {item.files.length > 1 && item.status === 'pending' && <button onClick={() => splitItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 11, fontFamily: 'inherit' }}>Split</button>}
-                  <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, padding: '2px 4px' }}>✕</button>
+                  <button onClick={() => removeItem(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16, padding: '2px 4px' }}>x</button>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* RIGHT — REVIEW */}
+        {/* RIGHT - REVIEW */}
         {items.length > 0 && (
           <div>
             {!activeItem || activeItem.status !== 'review' ? (
