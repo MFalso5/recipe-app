@@ -250,8 +250,20 @@ function BatchImportPageInner() {
   const savedCount = items.filter(i => i.status === 'saved').length
   const activeItem = items.find(i => i.id === activeId)
 
-  const sColor = (s: BatchItem['status']) => ({ saved: 'var(--green)', error: 'var(--red)', review: 'var(--accent)', parsing: 'var(--muted)', saving: 'var(--muted)', pending: 'var(--muted)' }[s])
-  const sLabel = (s: BatchItem['status']) => ({ saved: 'Saved', error: 'Error', review: 'Review', parsing: 'Parsing...', saving: 'Saving...', pending: 'Pending' }[s])
+  const sColor = (s: BatchItem['status']): string => {
+    if (s === 'saved') return 'var(--green)'
+    if (s === 'error') return 'var(--red)'
+    if (s === 'review') return 'var(--accent)'
+    return 'var(--muted)'
+  }
+  const sLabel = (s: BatchItem['status']): string => {
+    if (s === 'saved') return 'Saved'
+    if (s === 'error') return 'Error'
+    if (s === 'review') return 'Review'
+    if (s === 'parsing') return 'Parsing...'
+    if (s === 'saving') return 'Saving...'
+    return 'Pending'
+  }
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 16px 80px' }}>
