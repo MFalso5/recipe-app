@@ -197,10 +197,14 @@ export default function Home() {
               </div>
             )}
             {!activeCollection && !smartMode && (
-              <select className="input" style={{ width: 'auto' }} value={sort} onChange={e => setSort(e.target.value)}>
+              <select className="input" style={{ width: 'auto' }} value={favoritesOnly ? 'favorites' : sort} onChange={e => {
+                if (e.target.value === 'favorites') { setFavoritesOnly(true); setSort('recent') }
+                else { setFavoritesOnly(false); setSort(e.target.value) }
+              }}>
                 <option value="recent">Most recent</option>
-                <option value="alpha">A → Z</option>
+                <option value="alpha">A to Z</option>
                 <option value="made">Made first</option>
+                <option value="favorites">★ Favorites</option>
               </select>
             )}
             <button onClick={() => { setSmartMode(!smartMode); clearSmartSearch() }} style={{

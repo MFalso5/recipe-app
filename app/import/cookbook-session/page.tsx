@@ -8,11 +8,12 @@ import RecipeReviewPanel from '@/components/RecipeReviewPanel'
 
 interface QueueItem {
   id: string
-  file: File
-  preview: string
+  files: File[]
+  previews: string[]
   status: 'pending' | 'parsing' | 'review' | 'saving' | 'saved' | 'error'
   recipe: Partial<Recipe> | null
   error: string | null
+  selected: boolean
 }
 
 type ParseMode = 'immediate' | 'queue'
@@ -37,6 +38,8 @@ export default function CookbookSessionPage() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
+  const [sessionId] = useState(() => 'session-' + Date.now())
+  const [draftSaved, setDraftSaved] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   // Load existing cookbooks
@@ -74,21 +77,55 @@ export default function CookbookSessionPage() {
     setStep('import')
   }
 
+  const saveDraft = async (currentQueue: QueueItem[]) => {
+    const saveable = currentQueue.filter(i => i.status === 'review' && i.recipe)
+    if (!saveable.length) return
+    await fetch('/api/drafts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId,
+        items: saveable.map(i => ({ id: i.id, recipe: i.recipe, cookbookTitle, cookbookAuthor }))
+      })
+    })
+    setDraftSaved(true)
+    setTimeout(() => setDraftSaved(false), 2000)
+  }
+
   const addPhoto = async (file: File) => {
     const preview = URL.createObjectURL(file)
     const item: QueueItem = {
       id: crypto.randomUUID(),
-      file,
-      preview,
+      files: [file],
+      previews: [preview],
       status: parseMode === 'immediate' ? 'parsing' : 'pending',
       recipe: null,
-      error: null
+      error: null,
+      selected: false
     }
     setQueue(prev => [...prev, item])
-
     if (parseMode === 'immediate') {
       await parseItem(item, cookbookTitle, cookbookAuthor)
     }
+  }
+
+  const toggleSelect = (id: string) => {
+    setQueue(prev => prev.map(i => i.id === id ? { ...i, selected: !i.selected } : i))
+  }
+
+  const mergeSelected = () => {
+    const selected = queue.filter(i => i.selected && i.status === 'pending')
+    if (selected.length < 2) return
+    const merged: QueueItem = {
+      id: crypto.randomUUID(),
+      files: selected.flatMap(i => i.files),
+      previews: selected.flatMap(i => i.previews),
+      status: 'pending',
+      recipe: null,
+      error: null,
+      selected: false
+    }
+    setQueue(prev => [...prev.filter(i => !i.selected), merged])
   }
 
   const parseItem = async (item: QueueItem, cbTitle: string, cbAuthor: string) => {
@@ -98,7 +135,8 @@ export default function CookbookSessionPage() {
     updateItem(item.id, { status: 'parsing' })
     try {
       const fd = new FormData()
-      fd.append('images', item.file)
+      item.files.forEach(f => fd.append('images', f))
+      fd.append('page_count', String(item.files.length))
       const res = await fetch('/api/parse-image', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error || 'Parse failed')
@@ -288,6 +326,13 @@ export default function CookbookSessionPage() {
         {/* ── STEP 2: IMPORT ── */}
         {step === 'import' && (
           <div>
+            {/* MERGE HINT */}
+            {queue.filter(i => i.selected).length >= 2 && (
+              <button onClick={mergeSelected} style={{ width: '100%', background: 'var(--accent-bg)', border: '1px solid var(--accent)', borderRadius: 10, padding: '10px', fontSize: 14, color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, marginBottom: 10 }}>
+                Merge {queue.filter(i => i.selected).length} pages into one recipe
+              </button>
+            )}
+
             {/* BIG CAMERA BUTTON */}
             <div onClick={() => fileRef.current?.click()} style={{
               background: 'var(--accent)', borderRadius: 16, padding: '28px 20px',
@@ -327,7 +372,13 @@ export default function CookbookSessionPage() {
                       cursor: item.status === 'review' ? 'pointer' : 'default'
                     }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px' }}>
-                      <img src={item.preview} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                      {item.status === 'pending' && (
+                        <input type="checkbox" checked={item.selected} onChange={() => toggleSelect(item.id)}
+                          style={{ accentColor: 'var(--accent)', width: 16, height: 16, flexShrink: 0 }}
+                          onClick={e => e.stopPropagation()} />
+                      )}
+                      <img src={item.previews[0]} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+                      {item.previews.length > 1 && <span style={{ position: 'absolute', top: 2, right: 2, background: 'var(--accent)', color: '#fff', borderRadius: 50, width: 18, height: 18, fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 600 }}>{item.previews.length}</span>}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 14, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.recipe?.title || 'Photo ' + (queue.indexOf(item) + 1)}

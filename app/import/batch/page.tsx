@@ -37,6 +37,13 @@ function BatchImportPageInner() {
   const searchParams = useSearchParams()
   const fileRef = useRef<HTMLInputElement>(null)
   const [items, setItems] = useState<BatchItem[]>([])
+  const [drafts, setDrafts] = useState<{sessionId: string, items: {id: string, recipe: unknown, cookbookTitle: string}[]}[]>([])
+
+  useEffect(function() {
+    fetch('/api/drafts').then(function(r) { return r.json() }).then(function(d) {
+      setDrafts(d.drafts || [])
+    })
+  }, [])
   const [activeId, setActiveId] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [dragOver, setDragOver] = useState(false)
