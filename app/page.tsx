@@ -203,15 +203,6 @@ export default function Home() {
                 <option value="made">Made first</option>
               </select>
             )}
-            <button onClick={() => setFavoritesOnly(f => !f)} style={{
-              display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px',
-              background: favoritesOnly ? '#FEF9C3' : 'var(--card)',
-              border: '0.5px solid ' + (favoritesOnly ? '#FDE047' : 'var(--border)'),
-              borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
-              color: favoritesOnly ? '#854D0E' : 'var(--muted)', fontWeight: favoritesOnly ? 600 : 400, flexShrink: 0
-            }}>
-              {favoritesOnly ? '★ Favorites' : '☆ Favorites'}
-            </button>
             <button onClick={() => { setSmartMode(!smartMode); clearSmartSearch() }} style={{
               display: 'flex', alignItems: 'center', gap: 6, padding: '9px 14px',
               background: smartMode ? 'var(--accent-bg)' : 'var(--card)',

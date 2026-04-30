@@ -18,6 +18,7 @@ async function uploadImageToBlob(file: File): Promise<string> {
 export default function RecipePage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [recipe, setRecipe] = useState<Recipe | null>(null)
+  const [favorited, setFavorited] = useState(false)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   const saveTimeout = useRef<NodeJS.Timeout | null>(null)
@@ -177,6 +178,17 @@ export default function RecipePage({ params }: { params: { id: string } }) {
               <button onClick={exportJSON} style={{ display: 'block', width: '100%', padding: '8px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textAlign: 'left', fontFamily: 'inherit', borderRadius: 6 }}>💾 JSON Backup</button>
             </div>
           </details>
+          <button onClick={async () => {
+            const next = !favorited
+            setFavorited(next)
+            await fetch('/api/recipes/' + params.id, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ favorited: next }) })
+          }} style={{
+            background: favorited ? '#FEF9C3' : 'var(--card)', border: '0.5px solid ' + (favorited ? '#FDE047' : 'var(--border)'),
+            borderRadius: 8, padding: '6px 12px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
+            color: favorited ? '#854D0E' : 'var(--muted)', fontWeight: favorited ? 600 : 400
+          }}>
+            {favorited ? '★' : '☆'}
+          </button>
           <button className="btn btn-ghost btn-sm" onClick={shareRecipe}>🔗 Share</button>
           <Link href={'/recipe/' + params.id + '/edit'} className="btn btn-ghost btn-sm">✏️ Edit</Link>
           <button className="btn btn-danger btn-sm" onClick={deleteRecipe} disabled={deleting}>{deleting ? '...' : '🗑 Delete'}</button>
