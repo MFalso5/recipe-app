@@ -592,10 +592,6 @@ function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, 
             <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Publication Year</label>
             <input className="input" value={pubYear} onChange={e => setPubYear(e.target.value)} placeholder="e.g. 2013" />
           </div>
-          <div>
-            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Publication Year</label>
-            <input className="input" value={pubYear} onChange={e => setPubYear(e.target.value)} placeholder="e.g. 2013" />
-          </div>
 
           <div>
             <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Cover Photo</label>
