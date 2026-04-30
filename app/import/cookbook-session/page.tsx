@@ -368,7 +368,7 @@ export default function CookbookSessionPage() {
                           compact={true}
                           onChange={(updated) => updateRecipe(item.id, updated as Partial<Recipe>)}
                           onSave={() => saveItem(item.id)}
-                          saving={item.status === 'saving'}
+                          saving={queue.find(q => q.id === item.id)?.status === 'saving'}
                         />
                       </div>
                     )}
