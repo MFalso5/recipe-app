@@ -190,7 +190,6 @@ export interface Cookbook {
   author: string | null
   pub_year: string | null
   cover_url: string | null
-  pub_year: string | null
   created_at: string
   updated_at: string
 }
