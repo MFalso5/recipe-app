@@ -139,7 +139,7 @@ export default function RecipeCard({ recipe: r, onToggleMade, onUpdateLog, onUpd
                   {made ? 'Made it' : 'Made it'}
                 </label>
                 <button onClick={handleFavorite} style={{ background: favorited ? '#FEF9C3' : 'var(--tag)', border: '0.5px solid ' + (favorited ? '#FDE047' : 'var(--border)'), borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 14, lineHeight: 1, color: favorited ? '#854D0E' : 'var(--muted)', fontWeight: favorited ? 700 : 400 }}>
-                  {favorited ? 'Fav' : 'Fav'}
+                  {favorited ? <span>&#9733;</span> : <span>&#9734;</span>}
                 </button>
               </div>
             )}
