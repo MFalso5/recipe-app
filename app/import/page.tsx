@@ -264,9 +264,9 @@ export default function ImportPage() {
       {step === 'import' && (
         <div className="card-shell">
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
-            {(['url','image','document','text','urls'] as ImportMode[]).map(m => {
+            {(['url','image','document','text'] as ImportMode[]).map(m => {
               const labels: Record<ImportMode, string> = { url: 'URL', image: 'Photo', document: 'PDF / Doc', text: 'Paste Text' }
-              const icons: Record<ImportMode, string> = { url: '🔗', image: '📷', document: '📄', text: '📋', urls: '🔗🔗' }
+              const icons: Record<ImportMode, string> = { url: '🔗', image: '📷', document: '📄', text: '📋' }
               return (
                 <button key={m} onClick={() => setMode(m)} style={{
                   flex: 1, padding: '14px 0', fontSize: 14, fontWeight: 500,
