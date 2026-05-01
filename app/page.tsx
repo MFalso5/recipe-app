@@ -491,38 +491,6 @@ export default function Home() {
               </>
             )}
 
-            {/* MENUS */}
-            {view === 'menus' && (
-              menus.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
-                  <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 24, marginBottom: 8 }}>No menus yet</h2>
-                  <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 24 }}>Create a menu for your next holiday or event</p>
-                  <button onClick={createMenu} className="btn btn-primary">+ New Menu</button>
-                </div>
-              ) : (
-                <>
-                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>{menus.length} {menus.length === 1 ? 'menu' : 'menus'}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-                    {menus.map(menu => (
-                      <Link href={'/menus/' + menu.id} key={menu.id} style={{ textDecoration: 'none' }}>
-                        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, padding: '20px 22px', cursor: 'pointer', transition: 'transform .18s, box-shadow .18s' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 32px rgba(0,0,0,.1)' }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}>
-                          <div style={{ fontSize: 32, marginBottom: 12 }}>🍽️</div>
-                          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 600, marginBottom: 4 }}>{menu.name}</div>
-                          {menu.date && <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>📅 {menu.date}</div>}
-                          <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-                            {menu.courses.filter(c => c.recipes.length > 0).length} courses · {menu.courses.reduce((n, c) => n + c.recipes.length, 0)} dishes
-                          </div>
-                          {menu.make_ahead.length > 0 && <div style={{ fontSize: 12, color: 'var(--accent)', marginTop: 6 }}>📋 {menu.make_ahead.length} make-ahead items</div>}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              )
-            )}
           </>
         )}
       </div>
