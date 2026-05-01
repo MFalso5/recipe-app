@@ -5,7 +5,7 @@ import { Recipe, Menu, Cookbook, DIETARY_TAGS } from '@/lib/types'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-type ViewMode = 'all' | 'collections' | 'menus'
+type ViewMode = 'all' | 'collections'
 
 interface Collection {
   name: string
@@ -139,8 +139,12 @@ export default function Home() {
       <div style={{ background: 'var(--card)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: 60, display: 'flex', alignItems: 'center', gap: 16 }}>
           <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 22, fontWeight: 700, whiteSpace: 'nowrap', marginRight: 8 }}>Recipe Collector</h1>
+          {/* + IMPORT BUTTON */}
+          <Link href="/import" className="btn btn-primary btn-sm" style={{ whiteSpace: 'nowrap' }}>+ Import</Link>
+
+          {/* PRIMARY TABS */}
           <div style={{ display: 'flex', background: 'var(--tag)', borderRadius: 10, padding: 3, gap: 2 }}>
-            {(['all', 'collections', 'menus'] as ViewMode[]).map(v => (
+            {(['all', 'collections'] as ViewMode[]).map(v => (
               <button key={v} onClick={() => { setView(v); setActiveCollection(null) }} style={{
                 padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
                 fontFamily: 'inherit', fontSize: 13, fontWeight: 500,
@@ -148,23 +152,14 @@ export default function Home() {
                 color: view === v ? 'var(--ink)' : 'var(--muted)',
                 boxShadow: view === v ? '0 1px 4px rgba(0,0,0,.08)' : 'none', transition: 'all .15s'
               }}>
-                {v === 'all' ? 'All Recipes (' + recipes.length + ')' : v === 'collections' ? 'Collections (' + collections.length + ')' : 'Menus (' + menus.length + ')'}
+                {v === 'all' ? 'All Recipes (' + recipes.length + ')' : 'Collections (' + collections.length + ')'}
               </button>
             ))}
           </div>
-          {/* ADD + BATCH — between primary and secondary nav */}
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            {view === 'menus' && (
-              <button onClick={createMenu} className="btn btn-ghost btn-sm">+ New Menu</button>
-            )}
-            <Link href="/import" className="btn btn-primary btn-sm" style={{ whiteSpace: 'nowrap' }}>+ Add Recipe</Link>
-            <Link href="/import/batch" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }}>📂 Batch</Link>
-          </div>
-          <Link href="/meal-prep-list" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, color: 'var(--muted)', textDecoration: 'none', background: 'var(--tag)', whiteSpace: 'nowrap' }}>🥘 Meal Prep</Link>
-          <Link href="/research" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, color: 'var(--muted)', textDecoration: 'none', background: 'var(--tag)', whiteSpace: 'nowrap' }}>🔬 Research</Link>
-          <Link href="/saved-articles" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, color: 'var(--muted)', textDecoration: 'none', background: 'var(--tag)', whiteSpace: 'nowrap' }}>📌 Saved Articles</Link>
-          <div style={{ marginLeft: 'auto' }}>
-            <Link href="/settings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 8, background: 'var(--tag)', color: 'var(--muted)', textDecoration: 'none', fontSize: 16, flexShrink: 0 }} title="Settings">⚙️</Link>
+
+          {/* MORE DROPDOWN */}
+          <div style={{ marginLeft: 'auto', position: 'relative' }}>
+            <MoreMenu menus={menus} onCreateMenu={createMenu} />
           </div>
         </div>
       </div>
@@ -560,6 +555,68 @@ function CookbookCard({ collection, cookbook, onClick, onEdit }: { collection: C
           {madeCount > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}>✓ {madeCount} made</span>}
         </div>
       </div>
+    </div>
+  )
+}
+
+
+function MoreMenu({ menus, onCreateMenu }: { menus: unknown[], onCreateMenu: () => void }) {
+  const [open, setOpen] = React.useState(false)
+  const ref = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const item = (href: string, icon: string, label: string, soon?: boolean) => (
+    soon ? (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', fontSize: 13, color: 'var(--muted)', opacity: .5 }}>
+        <span>{icon}</span><span>{label}</span><span style={{ marginLeft: 'auto', fontSize: 10, background: 'var(--tag)', padding: '1px 6px', borderRadius: 50 }}>Soon</span>
+      </div>
+    ) : (
+      <Link href={href} onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', fontSize: 13, color: 'var(--ink)', textDecoration: 'none', borderRadius: 6, transition: 'background .1s' }}
+        onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = 'var(--cream)'}
+        onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'}>
+        <span>{icon}</span><span>{label}</span>
+      </Link>
+    )
+  )
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
+        background: open ? 'var(--tag)' : 'var(--card)', border: '0.5px solid var(--border)',
+        borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)', fontWeight: 500
+      }}>
+        More {open ? '▲' : '▼'}
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: 'var(--card)', border: '0.5px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,.12)', minWidth: 220, zIndex: 100, padding: '6px' }}>
+          {item('/menus', '📋', 'Menus')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', fontSize: 13, color: 'var(--ink)', cursor: 'pointer', borderRadius: 6 }}
+            onClick={() => { onCreateMenu(); setOpen(false) }}
+            onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'var(--cream)'}
+            onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
+            <span>+</span><span>New Menu</span>
+          </div>
+          {item('/meal-prep-list', '🥘', 'Meal Prep')}
+          {item('/research', '🔬', 'Research')}
+          {item('/saved-articles', '📌', 'Saved Articles')}
+          <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
+          {item('/bulk-tags', '🏷', 'Bulk Tag Editor')}
+          {item('/import/batch', '📂', 'Batch Import')}
+          {item('/import/cookbook-session', '📚', 'Cookbook Session')}
+          <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
+          {item('', '💰', 'Cost per Serving', true)}
+          {item('', '🥗', 'Nutrition Info', true)}
+          {item('', '⚖️', 'Recipe Scaling', true)}
+          {item('', '🔬', 'Recipe Analyzer', true)}
+          {item('', '🔐', 'Login & Access', true)}
+        </div>
+      )}
     </div>
   )
 }
