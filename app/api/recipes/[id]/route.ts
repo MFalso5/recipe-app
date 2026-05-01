@@ -41,7 +41,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   try {
     const existing = await dbGetRecipe(params.id) as Recipe
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-    const updated: Recipe = { ...existing, made: !existing.made, updated_at: new Date().toISOString() }
+    const body = await req.json().catch(() => ({}))
+    // If body has fields, merge them; otherwise just toggle made
+    const updated: Recipe = Object.keys(body).length > 0
+      ? { ...existing, ...body, id: params.id, updated_at: new Date().toISOString() }
+      : { ...existing, made: !existing.made, updated_at: new Date().toISOString() }
     await dbSaveRecipe(updated)
     return NextResponse.json({ recipe: updated })
   } catch (err: unknown) {
