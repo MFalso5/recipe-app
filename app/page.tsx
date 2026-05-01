@@ -654,13 +654,17 @@ function CollectionCard({ collection, onClick }: { collection: Collection, onCli
   )
 }
 
-function RecipeGrid({ recipes }: { recipes: Recipe[] }) {
+function RecipeGrid({ recipes, cookbooks }: { recipes: Recipe[], cookbooks?: Cookbook[] }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 18 }}>
-      {recipes.map(r => (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+      {recipes.map(r => {
+        const cbCover = !r.image_url && cookbooks ? cookbooks.find(c => c.name === r.source)?.cover_url : null
+        return (
         <Link href={'/recipe/' + r.id} key={r.id} style={{ display: 'block', textDecoration: 'none' }}>
           <div className="lib-card">
-            {r.image_url ? <img className="lib-card-img" src={r.image_url} alt={r.title} /> : <div className="lib-card-placeholder">🍽️</div>}
+            {r.image_url ? <img className="lib-card-img" src={r.image_url} alt={r.title} />
+              : cbCover ? <img className="lib-card-img" src={cbCover} alt={r.title} style={{ opacity: 0.6 }} />
+              : <div className="lib-card-placeholder">🍽️</div>}
             <div className="lib-card-body">
               <div className="lib-card-tags">
                 {r.favorited && <span style={{ fontSize: 12, color: '#854D0E' }}>★</span>}
