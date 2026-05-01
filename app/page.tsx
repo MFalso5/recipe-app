@@ -338,7 +338,7 @@ export default function Home() {
                     <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 24 }}>Add your first recipe to get started</p>
                     <Link href="/import" className="btn btn-primary">+ Add Recipe</Link>
                   </div>
-                ) : <RecipeGrid recipes={filtered} />}
+                ) : <RecipeGrid recipes={filtered} cookbooks={cookbooks} />}
               </>
             )}
 
@@ -689,7 +689,8 @@ function RecipeGrid({ recipes }: { recipes: Recipe[] }) {
             </div>
           </div>
         </Link>
-      ))}
+        )
+      })}
     </div>
   )
 }

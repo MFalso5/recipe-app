@@ -24,6 +24,13 @@ export interface StepGroup {
   steps: Step[]
 }
 
+export interface Variation {
+  title: string
+  description: string | null
+  ingredients: Ingredient[]
+  steps: string[]
+}
+
 export interface MadeItEntry {
   id: string
   date: string
@@ -46,6 +53,7 @@ export interface Recipe {
   ingredient_groups: IngredientGroup[]
   step_groups: StepGroup[]
   notes: string[] | null
+  variations: Variation[] | null
   tips: string[] | null
   storage: string | null
   image_url: string | null
