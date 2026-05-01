@@ -26,7 +26,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   useEffect(() => {
     fetch('/api/recipes/' + params.id)
       .then(r => r.json())
-      .then(d => { setRecipe(d.recipe); setLoading(false) })
+      .then(d => { setRecipe(d.recipe); setFavorited(d.recipe?.favorited || false); setLoading(false) })
   }, [params.id])
 
   const saveRecipe = (updated: Recipe) => {
