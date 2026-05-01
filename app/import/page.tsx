@@ -344,18 +344,6 @@ export default function ImportPage() {
             )}
 
 
-            {mode === 'urls' && (
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 12 }}>
-                  Batch URL Import
-                </div>
-                <BatchUrlInputs value={text} onChange={setText} />
-                <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10 }}>
-                  Each URL imports separately — review each one before saving.
-                </p>
-              </div>
-            )}
-
             {mode === 'text' && (
               <div>
                 <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>Paste Recipe Text</div>
