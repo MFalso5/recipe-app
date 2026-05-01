@@ -79,7 +79,7 @@ async function compressImage(file: File, maxSizeKB = 1500): Promise<File> {
 
 
 type Step = 'import' | 'loading' | 'review' | 'card'
-type ImportMode = 'url' | 'image' | 'document' | 'text' | 'urls'
+type ImportMode = 'url' | 'image' | 'document' | 'text'
 
 type ParsedRecipe = Omit<Recipe, 'id' | 'made' | 'created_at' | 'updated_at'>
 
@@ -180,21 +180,7 @@ export default function ImportPage() {
 
     try {
       let res: Response
-      if (mode === 'urls') {
-        const rawUrls = text.split(/[\n]/).map(u => u.trim()).filter(u => u.startsWith('http'))
-        if (!rawUrls.length) { setError('Please enter at least one valid URL.'); return }
-        // Strip UTM params
-        const urls = rawUrls.map(u => {
-          try {
-            const parsed = new URL(u)
-            ;['utm_source','utm_medium','utm_campaign','utm_content','utm_term','fbclid','gclid'].forEach(p => parsed.searchParams.delete(p))
-            return parsed.toString()
-          } catch { return u }
-        })
-        sessionStorage.setItem('batchUrls', JSON.stringify(urls))
-        router.push('/import/batch?mode=urls')
-        return
-      }
+
       if (mode === 'url') {
         res = await fetch('/api/parse-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) })
       } else if (mode === 'image') {
@@ -254,7 +240,7 @@ export default function ImportPage() {
           <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 28, fontWeight: 700 }}>Add Recipe</h1>
           <p style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>Import from a URL, photo, or pasted text</p>
         </div>
-        <Link href="/import/batch" className="btn btn-ghost btn-sm">📂 Batch Import</Link>
+        <Link href="/import/batch" className="btn btn-ghost btn-sm">Batch Import</Link>
           <Link href="/import/google-docs" className="btn btn-ghost btn-sm">📁 Google Drive</Link>
           <Link href="/" className="btn btn-ghost btn-sm">← Library</Link>
       </div>
@@ -279,7 +265,7 @@ export default function ImportPage() {
         <div className="card-shell">
           <div style={{ display: 'flex', borderBottom: '1px solid var(--border)' }}>
             {(['url','image','document','text','urls'] as ImportMode[]).map(m => {
-              const labels: Record<ImportMode, string> = { url: 'URL', image: 'Photo', document: 'PDF / Doc', text: 'Paste Text', urls: 'Batch URLs' }
+              const labels: Record<ImportMode, string> = { url: 'URL', image: 'Photo', document: 'PDF / Doc', text: 'Paste Text' }
               const icons: Record<ImportMode, string> = { url: '🔗', image: '📷', document: '📄', text: '📋', urls: '🔗🔗' }
               return (
                 <button key={m} onClick={() => setMode(m)} style={{
