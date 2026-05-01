@@ -133,13 +133,15 @@ export default function RecipeCard({ recipe: r, onToggleMade, onUpdateLog, onUpd
               </span>
             )}
             {!printMode && (
-              <label className={'made-badge' + (made ? ' checked' : '')} onClick={handleMade} style={{ cursor: 'pointer' }}>
-                <input type="checkbox" checked={made} onChange={() => {}} style={{ pointerEvents: 'none' }} />
-                {made ? '✓ Made it' : 'Made it'}
-              </label>
-              <button onClick={handleFavorite} style={{ background: favorited ? '#FEF9C3' : 'var(--tag)', border: '0.5px solid ' + (favorited ? '#FDE047' : 'var(--border)'), borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 16, lineHeight: 1, color: favorited ? '#854D0E' : 'var(--muted)' }}>
-                {favorited ? '★' : '☆'}
-              </button>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <label className={'made-badge' + (made ? ' checked' : '')} onClick={handleMade} style={{ cursor: 'pointer' }}>
+                  <input type="checkbox" checked={made} onChange={() => {}} style={{ pointerEvents: 'none' }} />
+                  {made ? 'Made it' : 'Made it'}
+                </label>
+                <button onClick={handleFavorite} style={{ background: favorited ? '#FEF9C3' : 'var(--tag)', border: '0.5px solid ' + (favorited ? '#FDE047' : 'var(--border)'), borderRadius: 6, padding: '4px 10px', cursor: 'pointer', fontSize: 14, lineHeight: 1, color: favorited ? '#854D0E' : 'var(--muted)', fontWeight: favorited ? 700 : 400 }}>
+                  {favorited ? 'Fav' : 'Fav'}
+                </button>
+              </div>
             )}
           </div>
           {/* TAGS — Tier 1 + Tier 2 prominent, dietary smaller */}
