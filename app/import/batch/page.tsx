@@ -285,7 +285,7 @@ function BatchImportPageInner() {
                 <div style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>Cookbook session</div>
                 <div style={{ color: 'rgba(255,255,255,.75)', fontSize: 12, marginTop: 2 }}>Set details once, photograph recipes</div>
               </div>
-              <div style={{ color: 'rgba(255,255,255,.75)', fontSize: 18 }}>></div>
+              <div style={{ color: 'rgba(255,255,255,.75)', fontSize: 18 }}>&gt;</div>
             </div>
           </Link>
 
