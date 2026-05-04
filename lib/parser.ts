@@ -1,5 +1,10 @@
 export const PARSE_SYSTEM_PROMPT = `You are a recipe parser. Extract recipes into structured JSON.
 
+CRITICAL RULES:
+1. PRESERVE ALL STEP TEXT EXACTLY WORD FOR WORD. Do not paraphrase, summarize, rewrite, or omit any details from instructions. Every technique note, timing, and detail must be preserved exactly as written in the original.
+2. PRESERVE ALL INGREDIENT QUANTITIES EXACTLY as written. Never guess unclear quantities — use "?" instead.
+3. If a recipe contains embedded sub-recipes (e.g. "Anchovy Paste — recipe below", "Vinaigrette Base — recipe below"), extract them into the sub_recipes array AND reference them as linked ingredients in the main recipe.
+
 Use these quantity abbreviations:
 - cup(s) -> C
 - tablespoon(s) -> T
@@ -15,99 +20,71 @@ Ingredient formatting rules:
 - For ingredients with no unit, write the descriptor: "2 large" eggs, "3 cloves" garlic
 - For imperial + metric: put imperial qty first, then metric in parens after ingredient name: "1 C flour (189g)"
 - Only include metric when explicitly stated in the original recipe
-- If a quantity is unclear in an image, use "?" never guess
-- If an ingredient is itself a recipe (e.g. "All-Butter Pie Crust", "Homemade Stock", "Pastry Cream", "Basic Vinaigrette"), set is_linked_recipe to true in the ingredient object
+- If an ingredient references a sub-recipe (e.g. "Anchovy Paste (recipe below)"), set is_linked_recipe to true
 
 Yield rules:
-- Use pan/vessel ONLY when available: "9-inch pie", "9x13 pan", "12 muffins", "1 loaf", "two 8-inch rounds"
-- Never combine pan size with servings — pan size alone is sufficient
-- Only fall back to servings when absolutely no vessel or pan size is mentioned: "serves 4"
-- Page number rules: always format as "p. 186" — never just "186" or "page 186"
+- For baked goods (pies, cakes, bread, cookies, muffins etc): use pan/vessel size ONLY — e.g. "9-inch pie", "9x13 pan", "12 muffins"
+- NEVER include servings count alongside a vessel
+- For non-baked recipes (mains, soups, salads, pasta, sides): use "serves X" — e.g. "serves 4"
 
-Dietary tag rules - include any that clearly apply based on ingredients:
-Vegan, Vegetarian, Gluten Free, Dairy Free, Keto, Paleo, Sugar Free, Nut Free, Low Carb, Whole30
-
-Tag rules - always assign exactly one tag from each tier:
-
-TIER 1 - Dish Type (required, pick exactly one):
-Pie, Cake, Cookies, Bread, Pasta, Soup, Salad, Appetizer, Side, Main, Sauce, Drink, Breakfast, Snack
-- Pies and tarts -> "Pie"
-- All cakes including cheesecake -> "Cake"
-- Cookies, bars, brownies -> "Cookies"
-- All breads, rolls, biscuits -> "Bread"
-- All pasta, noodle dishes -> "Pasta"
-- Soups, stews, chowders -> "Soup"
-- All salads -> "Salad"
-- Starters, appetizers, dips -> "Appetizer"
-- Side dishes -> "Side"
-- Main courses, entrees -> "Main"
-- Sauces, condiments, dressings -> "Sauce"
-- Beverages, cocktails -> "Drink"
-- Breakfast, brunch items -> "Breakfast"
-- Snacks, nibbles -> "Snack"
-
-TIER 2 - Sweet or Savory (required, pick exactly one):
-Sweet, Savory
-- Desserts, pastries, sweet baked goods -> "Sweet"
-- Everything else -> "Savory"
-
-TIER 3 - Cuisine or Character (optional, add any that apply):
-Italian, French, American, Greek, Asian, Mexican, Spanish, Middle Eastern, Indian, Japanese, Chinese, Thai, Mediterranean, Holiday, Weekend, Quick, Comfort Food, Seasonal, Summer, Winter, Spring, Fall
-
-Tags should be title case. Do not use "Dessert" as a tag — use "Sweet" instead.
-
-Source type rules:
-- Set source_type to "cookbook" if: the recipe came from a photo/image with a page number visible, or the source appears to be a book title (e.g. "The Four and Twenty Blackbirds Pie Book", "Salt Fat Acid Heat")
-- Set source_type to "website" if: the recipe has a URL, or the source is a website/blog name (e.g. "Sip and Feast", "NYT Cooking")
-- Set source_type to "other" if: unclear or manually entered
+Page number: ALWAYS formatted as "p. 182" with the "p." prefix — never just a number.
 
 Source rules:
-- For URLs: use the website name (e.g. "Sip and Feast", "NYT Cooking", "America's Test Kitchen")
-- For cookbook photos: look for the book title, author name, or publisher visible anywhere in the image — spine, header, footer, page corner
-- For PDFs or documents: check the document title, header, or footer
-- If no source is visible, use "Unknown Source" — never leave it blank or null
-- Page numbers visible in images should always be captured
+- If no source is detectable, use null (not "Unknown Source")
+- source_type: "cookbook" if from a book, "website" if from a URL, "other" otherwise
+
+3-tier tag system:
+- Tier 1 (required, one): Pie, Cake, Cookies, Bread, Pasta, Soup, Salad, Appetizer, Side, Main, Sauce, Drink, Breakfast, Snack
+- Tier 2 (required, one): Sweet, Savory
+- Tier 3 (optional): Italian, French, American, Greek, Asian, Mexican, etc.
+
+Dietary tags — include any that clearly apply:
+Vegan, Vegetarian, Gluten Free, Dairy Free, Keto, Paleo, Sugar Free, Nut Free, Low Carb, Whole30
 
 Return ONLY the JSON object with no markdown fences or explanation.`
 
 export const PARSE_SCHEMA = `{
   "title": "Recipe name",
-  "source": "Website or book name",
+  "source": "Website or book name or null if unknown",
   "source_url": "URL or null",
   "source_type": "cookbook or website or other",
-  "page_number": "Page number if from a book, always formatted as 'p. 186' — never just a number. null if not applicable.",
-  "description": "Introductory description paragraph",
-  "yield": "Pan/vessel size only if available (e.g. '9-inch pie', '9x13 pan', 'two 8-inch rounds', '12 muffins', '1 loaf'). Only use servings as fallback if no pan size exists (e.g. 'serves 4'). Never combine both.",
+  "page_number": "p. 182 format or null",
+  "description": "Introductory description paragraph or null",
+  "yield": "e.g. 9-inch pie or serves 4 or null",
   "time_active": "e.g. 30 min or null",
-  "temperature": "e.g. 350F or null (include all temps e.g. 425F -> 375F)",
+  "temperature": "e.g. 350F or null",
   "before_you_begin": "Pertinent prep notes or null",
   "equipment": "comma-separated list or null",
   "ingredient_groups": [
     {
-      "group_name": "Group name or null for ungrouped",
+      "group_name": "Group name or null",
       "ingredients": [
         {
           "qty": "1 C",
           "name": "all-purpose flour (189g)",
-          "is_linked_recipe": false,
-          "linked_recipe_id": null,
-          "linked_recipe_title": null
+          "is_linked_recipe": false
         }
       ]
     }
   ],
   "step_groups": [
     {
-      "group_name": "Section name or null for ungrouped",
+      "group_name": "Section name or null",
       "steps": [
-        {"num": 1, "time": "5 min or null", "text": "Step instruction"}
+        {"num": 1, "time": "5 min or null", "text": "EXACT original step text — preserve word for word"}
       ]
     }
   ],
   "notes": ["Note 1"] or null,
-  "tips": ["Tip 1"] or null,
   "storage": "Storage instructions or null",
   "image_url": "Direct image URL or null",
-  "tags": ["Dinner", "Italian"],
-  "dietary_tags": ["Vegan", "Gluten Free"] or []
+  "tags": ["Main", "Savory", "Italian"],
+  "dietary_tags": ["Vegan"] or [],
+  "sub_recipes": [
+    {
+      "title": "Anchovy Paste",
+      "ingredient_groups": [{"group_name": null, "ingredients": [{"qty": "1 oz", "name": "oil-cured anchovies", "is_linked_recipe": false}]}],
+      "step_groups": [{"group_name": null, "steps": [{"num": 1, "time": null, "text": "EXACT original step text"}]}]
+    }
+  ] or null
 }`
