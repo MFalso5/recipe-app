@@ -1,7 +1,7 @@
 'use client'
 import * as React from 'react'
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useRef, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Recipe, Cookbook } from '@/lib/types'
 import RecipeReviewPanel from '@/components/RecipeReviewPanel'
@@ -19,8 +19,9 @@ interface QueueItem {
 type ParseMode = 'immediate' | 'queue'
 type SessionMode = 'new' | 'existing'
 
-export default function CookbookSessionPage() {
+function CookbookSessionPageInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Step tracking
   const [step, setStep] = useState<'setup' | 'import' | 'done'>('setup')
@@ -48,6 +49,34 @@ export default function CookbookSessionPage() {
       setExistingCookbooks(d.cookbooks || [])
     })
   }, [])
+
+  useEffect(() => {
+    const draftId = searchParams.get('draft')
+    if (!draftId) return
+    fetch('/api/drafts').then(r => r.json()).then(d => {
+      const draft = (d.drafts || []).find((dr: Record<string,unknown>) => String(dr.sessionId) === draftId)
+      if (!draft) return
+      const draftData = draft as Record<string,unknown>
+      const draftItems = draftData.items as {id: string, recipe: Record<string,unknown>, cookbookTitle: string}[]
+      if (!draftItems || !draftItems.length) return
+      setTitle(draftItems[0].cookbookTitle || '')
+      const restoredQueue = draftItems.map((di) => ({
+        id: di.id,
+        files: [] as File[],
+        previews: [] as string[],
+        status: 'review' as const,
+        recipe: di.recipe as Partial<Recipe>,
+        error: null,
+        selected: false
+      }))
+      setQueue(restoredQueue)
+      setStep('import')
+      if (restoredQueue.length > 0) setActiveId(restoredQueue[0].id)
+      fetch('/api/drafts', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: draftId }) })
+    })
+  }, [])
+
+
 
   const cookbookTitle = sessionMode === 'existing' ? selectedCookbook?.name || '' : title
   const cookbookAuthor = sessionMode === 'existing' ? selectedCookbook?.author || '' : author
@@ -478,5 +507,13 @@ export default function CookbookSessionPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CookbookSessionPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 80 }} />}>
+      <CookbookSessionPageInner />
+    </Suspense>
   )
 }
