@@ -104,7 +104,7 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
     set('dietary_tags', current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag])
   }
 
-  const sourceOk = recipe.source && recipe.source !== 'Unknown Source'
+  const sourceOk = true // Source optional
 
   const labelStyle: React.CSSProperties = {
     fontSize: 10, fontWeight: 600, letterSpacing: .8,
@@ -164,13 +164,12 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
           <input className="input" value={recipe.title || ''} onChange={e => set('title', e.target.value)} />
         </div>
         <div>
-          <label style={{ ...labelStyle, color: !sourceOk ? 'var(--red)' : 'var(--muted)' }}>
-            Source <span style={{ color: 'var(--red)' }}>*</span>
+          <label style={{ ...labelStyle, color: 'var(--muted)' }}>
+            Source (optional)
           </label>
-          <input className="input" style={{ borderColor: !sourceOk ? 'var(--red)' : undefined }}
+          <input className="input" style={{  }}
             value={recipe.source || ''} onChange={e => set('source', e.target.value)}
-            placeholder="e.g. Sip and Feast, Four & Twenty Blackbirds" />
-          {!sourceOk && <p style={{ fontSize: 11, color: 'var(--red)', marginTop: 3 }}>Required</p>}
+            placeholder="e.g. Sip and Feast (leave blank for General Recipes)" />
         </div>
         <div>
           <label style={labelStyle}>Source Type</label>
@@ -385,8 +384,8 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
       {/* SAVE BUTTON */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
         {onCancel && <button onClick={onCancel} className="btn btn-ghost">Cancel</button>}
-        <button onClick={onSave} className="btn btn-green" disabled={saving || !sourceOk}
-          style={{ opacity: !sourceOk ? .45 : 1 }}>
+        <button onClick={onSave} className="btn btn-green" disabled={saving}
+          >
           {saving ? '⟳ Saving...' : '✓ Save to Library'}
         </button>
       </div>
