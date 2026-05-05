@@ -21,7 +21,7 @@ export default function Home() {
   const [menus, setMenus] = useState<Menu[]>([])
   const [cookbooks, setCookbooks] = useState<Cookbook[]>([])
   const [editingCookbook, setEditingCookbook] = useState<string | null>(null)
-  const [cookbookSort, setCookbookSort] = useState<'author' | 'title'>('author')
+  const [cookbookSort, setCookbookSort] = useState<'author' | 'title'>('title')
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<ViewMode>('all')
   const [search, setSearch] = useState('')

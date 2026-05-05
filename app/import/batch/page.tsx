@@ -313,6 +313,13 @@ function BatchImportPageInner() {
 
           {/* TWO ACTION CARDS */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div onClick={function() { setShowUrls(function(v) { return !v }) }}
+              style={{ background: showUrls ? 'var(--accent-bg)' : 'var(--card)', border: '1px solid ' + (showUrls ? 'var(--accent)' : 'var(--border)'), borderRadius: 12, padding: '20px 12px', textAlign: 'center', cursor: 'pointer', transition: 'background .15s' }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>URLs</div>
+              <div style={{ fontSize: 13, fontWeight: 500, color: showUrls ? 'var(--accent)' : 'var(--ink)', marginBottom: 4 }}>Add URLs</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)' }}>Paste recipe links</div>
+            </div>
+
             <div onClick={function() { if (fileRef.current) fileRef.current.click() }}
               onDragOver={function(e) { e.preventDefault(); (e.currentTarget as HTMLDivElement).style.background = 'var(--accent-bg)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)' }}
               onDragLeave={function(e) { (e.currentTarget as HTMLDivElement).style.background = 'var(--card)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)' }}
@@ -326,13 +333,6 @@ function BatchImportPageInner() {
               <div style={{ fontSize: 28, marginBottom: 8 }}>Files</div>
               <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>Upload files</div>
               <div style={{ fontSize: 11, color: 'var(--muted)' }}>Click or drag and drop</div>
-            </div>
-
-            <div onClick={function() { setShowUrls(function(v) { return !v }) }}
-              style={{ background: showUrls ? 'var(--accent-bg)' : 'var(--card)', border: '1px solid ' + (showUrls ? 'var(--accent)' : 'var(--border)'), borderRadius: 12, padding: '20px 12px', textAlign: 'center', cursor: 'pointer', transition: 'background .15s' }}>
-              <div style={{ fontSize: 28, marginBottom: 8 }}>URLs</div>
-              <div style={{ fontSize: 13, fontWeight: 500, color: showUrls ? 'var(--accent)' : 'var(--ink)', marginBottom: 4 }}>Add URLs</div>
-              <div style={{ fontSize: 11, color: 'var(--muted)' }}>Paste recipe links</div>
             </div>
           </div>
 
