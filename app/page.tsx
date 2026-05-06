@@ -577,13 +577,13 @@ function MoreMenu({ menus, onCreateMenu }: { menus: unknown[], onCreateMenu: () 
           {item('/bulk-tags', '🏷', 'Bulk Tag Editor')}
           {item('/import/batch', '📂', 'Batch Import')}
           {item('/import/cookbook-session', '📚', 'Cookbook Session')}
-          {item('/settings', 'Settings', 'Settings')}
+          <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
+          {item('/settings', '⚙️', 'Settings')}
           <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
           {item('', '💰', 'Cost per Serving', true)}
           {item('', '🥗', 'Nutrition Info', true)}
           {item('', '⚖️', 'Recipe Scaling', true)}
           {item('', '🔬', 'Recipe Analyzer', true)}
-          {item('', '🔐', 'Login & Access', true)}
         </div>
       )}
     </div>
