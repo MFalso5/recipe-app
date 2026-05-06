@@ -1,89 +1,143 @@
 'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function SettingsPage() {
+  const router = useRouter()
+  const [currentUsername, setCurrentUsername] = useState('')
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newUsername, setNewUsername] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    fetch('/api/auth/credentials').then(r => r.json()).then(d => {
+      if (d.username) setCurrentUsername(d.username)
+    })
+  }, [])
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setMessage('')
+
+    if (!currentPassword) { setError('Please enter your current password'); return }
+    if (!newUsername.trim()) { setError('Username cannot be empty'); return }
+    if (!newPassword) { setError('Please enter a new password'); return }
+    if (newPassword !== confirmPassword) { setError('New passwords do not match'); return }
+    if (newPassword.length < 8) { setError('Password must be at least 8 characters'); return }
+
+    setSaving(true)
+    const res = await fetch('/api/auth/credentials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword, newUsername, newPassword })
+    })
+    const data = await res.json()
+    setSaving(false)
+
+    if (!res.ok) {
+      setError(data.error || 'Failed to update credentials')
+    } else {
+      setMessage('Credentials updated successfully!')
+      setCurrentUsername(newUsername)
+      setCurrentPassword('')
+      setNewUsername('')
+      setNewPassword('')
+      setConfirmPassword('')
+    }
+  }
+
+  const handleSignOut = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    router.push('/login')
+  }
+
+  const labelStyle = { fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase' as const, color: 'var(--muted)', display: 'block', marginBottom: 6 }
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--cream)' }}>
-      <div style={{ background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto', padding: '0 20px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link href="/" style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 700, textDecoration: 'none', color: 'var(--ink)' }}>Recipe Collector</Link>
-          <Link href="/" className="btn btn-ghost btn-sm">← Library</Link>
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '32px 16px 80px' }}>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+          <div>
+            <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 28, fontWeight: 700 }}>Settings</h1>
+            <p style={{ fontSize: 14, color: 'var(--muted)', marginTop: 4 }}>Manage your account</p>
+          </div>
+          <Link href="/" className="btn btn-ghost btn-sm">Back to Library</Link>
         </div>
-      </div>
 
-      <div style={{ maxWidth: 800, margin: '0 auto', padding: '32px 20px 80px' }}>
-        <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 28, fontWeight: 700, marginBottom: 6 }}>Settings</h1>
-        <p style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 32 }}>Manage your recipe library</p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-
-          {/* LIBRARY MANAGEMENT */}
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 4 }}>Library</div>
-
-          <SettingsCard
-            icon="🏷"
-            title="Bulk Tag Editor"
-            description="Update tags across all recipes at once — fix inconsistencies, add tiers"
-            href="/bulk-tags"
-          />
-
-          <SettingsCard
-            icon="📁"
-            title="Import from Google Drive"
-            description="Browse your Google Docs and import recipes directly"
-            href="/import/google-docs"
-          />
-
-          <SettingsCard
-            icon="📂"
-            title="Batch Import"
-            description="Import multiple recipes at once from photos, PDFs, or Word documents"
-            href="/import/batch"
-          />
-
-          {/* COMING SOON */}
-          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--muted)', marginTop: 16, marginBottom: 4 }}>Coming Soon</div>
-
-          <SettingsCard icon="💰" title="Cost per Serving" description="Track ingredient costs and calculate cost per serving" disabled />
-          <SettingsCard icon="🥗" title="Nutrition Information" description="Add nutritional data to your recipes" disabled />
-          <SettingsCard icon="⚖️" title="Recipe Scaling" description="Scale recipes up or down automatically" disabled />
-          <SettingsCard icon="🥫" title="Pantry & Equipment" description="Track what spices, ingredients and equipment you have" disabled />
-          <SettingsCard icon="🔬" title="Recipe Analyzer" description="Compare similar recipes side-by-side for recipe development" disabled />
-          <SettingsCard icon="🔐" title="Login & Access" description="Password protect your recipe collection" disabled />
-          <SettingsCard icon="🎨" title="Appearance" description="Customize colors, fonts and layout" disabled />
+        {/* CURRENT USER */}
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: '20px 24px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>Signed in as</div>
+              <div style={{ fontSize: 18, fontWeight: 600 }}>{currentUsername || 'Loading...'}</div>
+            </div>
+            <button onClick={handleSignOut} style={{ background: 'var(--tag)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)' }}>
+              Sign out
+            </button>
+          </div>
         </div>
+
+        {/* CHANGE CREDENTIALS */}
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: '24px' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 20 }}>Change Credentials</h2>
+
+          <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div>
+              <label style={labelStyle}>Current Password</label>
+              <input className="input" type="password" value={currentPassword}
+                onChange={e => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password" autoComplete="current-password" />
+            </div>
+            <div style={{ height: 1, background: 'var(--border)' }} />
+            <div>
+              <label style={labelStyle}>New Username</label>
+              <input className="input" type="text" value={newUsername}
+                onChange={e => setNewUsername(e.target.value)}
+                placeholder={currentUsername || 'New username'} autoComplete="username" />
+            </div>
+            <div>
+              <label style={labelStyle}>New Password</label>
+              <input className="input" type="password" value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                placeholder="Min 8 characters" autoComplete="new-password" />
+            </div>
+            <div>
+              <label style={labelStyle}>Confirm New Password</label>
+              <input className="input" type="password" value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                placeholder="Repeat new password" autoComplete="new-password" />
+            </div>
+
+            {error && <p style={{ fontSize: 13, color: 'var(--red)', margin: 0 }}>{error}</p>}
+            {message && <p style={{ fontSize: 13, color: 'var(--green)', margin: 0 }}>{message}</p>}
+
+            <button type="submit" className="btn btn-primary" style={{ padding: '11px' }} disabled={saving}>
+              {saving ? 'Saving...' : 'Update Credentials'}
+            </button>
+          </form>
+        </div>
+
+        {/* COMING SOON */}
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: '24px', marginTop: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Coming Soon</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {['Recipe Scaling', 'Cost per Serving', 'Nutrition Information', 'Pantry & Equipment Tracker', 'Recipe Analyzer'].map(item => (
+              <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--cream)', borderRadius: 8, opacity: .6 }}>
+                <span style={{ fontSize: 13, color: 'var(--muted)' }}>{item}</span>
+                <span style={{ marginLeft: 'auto', fontSize: 11, background: 'var(--tag)', color: 'var(--muted)', padding: '2px 8px', borderRadius: 50 }}>Soon</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   )
-}
-
-function SettingsCard({ icon, title, description, href, disabled }: {
-  icon: string
-  title: string
-  description: string
-  href?: string
-  disabled?: boolean
-}) {
-  const inner = (
-    <div style={{
-      background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14,
-      padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16,
-      opacity: disabled ? .5 : 1,
-      transition: disabled ? 'none' : 'transform .15s, box-shadow .15s',
-      cursor: disabled ? 'default' : 'pointer'
-    }}
-      onMouseEnter={e => { if (!disabled) { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,.08)' } }}
-      onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}>
-      <div style={{ width: 44, height: 44, borderRadius: 10, background: 'var(--tag)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>{icon}</div>
-      <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{title}</div>
-        <div style={{ fontSize: 13, color: 'var(--muted)' }}>{description}</div>
-      </div>
-      {!disabled && <div style={{ fontSize: 18, color: 'var(--muted)' }}>→</div>}
-      {disabled && <div style={{ fontSize: 11, color: 'var(--muted)', background: 'var(--tag)', padding: '2px 8px', borderRadius: 50 }}>Soon</div>}
-    </div>
-  )
-
-  if (href && !disabled) return <Link href={href} style={{ textDecoration: 'none' }}>{inner}</Link>
-  return inner
 }
