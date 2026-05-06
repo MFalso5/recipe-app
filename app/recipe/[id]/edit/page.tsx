@@ -244,7 +244,18 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
               {(recipe.gallery_urls || []).map((url, i) => (
                 <div key={i} style={{ position: 'relative' }}>
-                  <img src={url} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  <img src={url} alt="" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, cursor: 'pointer' }}
+                    title="Click to set as hero photo"
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    onClick={() => {
+                      const currentHero = recipe.image_url
+                      const newGallery = (recipe.gallery_urls || []).filter((_, j) => j !== i)
+                      if (currentHero) newGallery.unshift(currentHero)
+                      set('image_url', url)
+                      set('gallery_urls', newGallery)
+                    }}
+                  />
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, textAlign: 'center', fontSize: 9, background: 'rgba(0,0,0,.55)', color: '#fff', borderRadius: '0 0 8px 8px', padding: '2px 0', cursor: 'pointer', pointerEvents: 'none' }}>Set hero</div>
                   <button onClick={() => set('gallery_urls', (recipe.gallery_urls || []).filter((_, j) => j !== i))}
                     style={{ position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: '50%', background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                 </div>
