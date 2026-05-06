@@ -53,28 +53,48 @@ function CookbookSessionPageInner() {
   useEffect(() => {
     const draftId = searchParams.get('draft')
     if (!draftId) return
-    fetch('/api/drafts').then(r => r.json()).then(d => {
-      const draft = (d.drafts || []).find((dr: Record<string,unknown>) => String(dr.sessionId) === draftId)
-      if (!draft) return
-      const draftData = draft as Record<string,unknown>
-      const draftItems = draftData.items as {id: string, recipe: Record<string,unknown>, cookbookTitle: string}[]
-      if (!draftItems || !draftItems.length) return
-      setTitle(draftItems[0].cookbookTitle || '')
-      const restoredQueue = draftItems.map((di) => ({
-        id: di.id,
-        files: [] as File[],
-        previews: [] as string[],
-        status: 'review' as const,
-        recipe: di.recipe as Partial<Recipe>,
-        error: null,
-        selected: false
-      }))
-      setQueue(restoredQueue)
-      setStep('import')
-      if (restoredQueue.length > 0) setActiveId(restoredQueue[0].id)
-      fetch('/api/drafts', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sessionId: draftId }) })
-    })
-  }, [])
+
+    fetch('/api/drafts')
+      .then(r => r.json())
+      .then(d => {
+        const allDrafts = d.drafts || []
+        // Try matching by sessionId field inside data
+        const draft = allDrafts.find((dr: Record<string,unknown>) => {
+          return String(dr.sessionId) === draftId
+        })
+        if (!draft) {
+          console.log('Draft not found. Available:', allDrafts.map((dr: Record<string,unknown>) => dr.sessionId))
+          return
+        }
+        const draftItems = (draft as Record<string,unknown>).items as {id: string, recipe: Record<string,unknown>, cookbookTitle: string}[]
+        if (!draftItems || !draftItems.length) return
+
+        const cbTitle = draftItems[0].cookbookTitle || ''
+        setTitle(cbTitle)
+
+        const restoredQueue = draftItems.map((di) => ({
+          id: di.id,
+          files: [] as File[],
+          previews: [] as string[],
+          status: 'review' as const,
+          recipe: di.recipe as Partial<Recipe>,
+          error: null,
+          selected: false
+        }))
+
+        setQueue(restoredQueue)
+        setStep('import')
+        if (restoredQueue.length > 0) setActiveId(restoredQueue[0].id)
+
+        // Only delete after successfully restoring
+        fetch('/api/drafts', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: draftId })
+        })
+      })
+      .catch(err => console.error('Draft load error:', err))
+  }, [searchParams])
 
 
 
