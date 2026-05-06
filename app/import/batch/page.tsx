@@ -170,6 +170,7 @@ function BatchImportPageInner() {
       } else {
         item.files.forEach(function(f) { fd.append('images', f) })
         fd.append('page_count', String(item.files.length))
+        if (item.files.length > 1) fd.append('multi_page', 'true')
         const res = await fetch('/api/parse-image', { method: 'POST', body: fd })
         resData = await res.json()
         if (!res.ok || resData.error) throw new Error((resData.error as string) || 'Parse failed')
