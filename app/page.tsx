@@ -414,7 +414,7 @@ export default function Home() {
                             onClose={() => setEditingCookbook(null)}
                             onSave={async (author: string, coverUrl: string | null, pubYear: string | null) => {
                               const updated: Cookbook = {
-                                id: editingCookbook.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                                id: cb?.id || editingCookbook.toLowerCase().replace(/[^a-z0-9]/g, '-'),
                                 name: editingCookbook,
                                 author: author || null,
                                 cover_url: coverUrl,
