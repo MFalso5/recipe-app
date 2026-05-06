@@ -384,6 +384,46 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
       {/* SAVE BUTTON */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
         {onCancel && <button onClick={onCancel} className="btn btn-ghost">Cancel</button>}
+        {/* SUB-RECIPES */}
+        {((recipe as Record<string,unknown>).sub_recipes as unknown[])?.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 10 }}>
+              Linked Recipes Detected
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
+              These recipes were found inside this recipe. Check the ones you want to save as separate recipes.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {((recipe as Record<string,unknown>).sub_recipes as Record<string,unknown>[]).map((sr, i) => {
+                const selected = !((recipe as Record<string,unknown>).excluded_sub_recipes as number[] || []).includes(i)
+                return (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: selected ? 'var(--accent-bg)' : 'var(--tag)', border: '1px solid ' + (selected ? 'var(--accent)' : 'var(--border)'), borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }}
+                    onClick={() => {
+                      const excluded = [...((recipe as Record<string,unknown>).excluded_sub_recipes as number[] || [])]
+                      const idx = excluded.indexOf(i)
+                      if (idx >= 0) excluded.splice(idx, 1)
+                      else excluded.push(i)
+                      set('excluded_sub_recipes', excluded)
+                    }}>
+                    <div style={{ width: 18, height: 18, borderRadius: 4, border: '2px solid ' + (selected ? 'var(--accent)' : 'var(--border)'), background: selected ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                      {selected && <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>v</span>}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selected ? 'var(--accent)' : 'var(--ink)' }}>{String(sr.title || 'Untitled')}</div>
+                      <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+                        {((sr.ingredient_groups as Record<string,unknown>[])?.[0]?.ingredients as unknown[])?.length || 0} ingredients
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
+              Selected recipes will be saved separately and linked in the ingredients list.
+            </p>
+          </div>
+        )}
+
         <button onClick={onSave} className="btn btn-green" disabled={saving}
           >
           {saving ? '⟳ Saving...' : '✓ Save to Library'}
