@@ -38,13 +38,33 @@ function extractJsonLd(html: string): Record<string, unknown> | null {
 
 // Convert JSON-LD recipe to our format
 function jsonLdToRecipe(schema: Record<string, unknown>, sourceUrl: string): Record<string, unknown> {
+  // Unit abbreviation map
+  const unitMap: Record<string, string> = {
+    'cups': 'C', 'cup': 'C',
+    'tablespoons': 'T', 'tablespoon': 'T', 'tbsp': 'T',
+    'teaspoons': 't', 'teaspoon': 't', 'tsp': 't',
+    'ounces': 'oz', 'ounce': 'oz',
+    'pounds': '#', 'pound': '#', 'lbs': '#', 'lb': '#',
+    'grams': 'g', 'gram': 'g',
+    'kilograms': 'kg', 'kilogram': 'kg',
+    'milliliters': 'ml', 'milliliter': 'ml',
+    'liters': 'L', 'liter': 'L',
+  }
+
   // Parse ingredients
   const rawIngredients = (schema.recipeIngredient as string[]) || []
   const ingredients = rawIngredients.map((ing: string) => {
-    // Parse "2 cups all-purpose flour, sifted" into qty + name
-    const qtyMatch = ing.match(/^([\d\s\/.]+(?:cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|grams?|g|kg|ml|liters?|L|pinch|dash|handful|bunch|cloves?|heads?|slices?|pieces?|cans?|packages?|pkgs?)?\.?)\s+(.+)$/i)
+    const qtyMatch = ing.match(/^([\d\s\/.]+)\s*(cups?|tablespoons?|tbsp|teaspoons?|tsp|ounces?|oz|pounds?|lbs?|lb|grams?|g|kg|ml|milliliters?|liters?|L|pinch|dash|handful|bunch)\.?\s+(.+)$/i)
     if (qtyMatch) {
-      return { qty: qtyMatch[1].trim(), name: qtyMatch[2].trim(), is_linked_recipe: false }
+      const num = qtyMatch[1].trim()
+      const unit = unitMap[qtyMatch[2].toLowerCase()] || qtyMatch[2]
+      const name = qtyMatch[3].trim()
+      return { qty: num + ' ' + unit, name, is_linked_recipe: false }
+    }
+    // No unit - just a number
+    const numOnlyMatch = ing.match(/^([\d\s\/.]+)\s+(.+)$/)
+    if (numOnlyMatch) {
+      return { qty: numOnlyMatch[1].trim(), name: numOnlyMatch[2].trim(), is_linked_recipe: false }
     }
     return { qty: '', name: ing.trim(), is_linked_recipe: false }
   })
@@ -226,9 +246,22 @@ ${cleanHtml}`
         const claudeClean = extractJSON(claudeRaw.replace(/```json|```/g, '').trim())
         const claudeExtras = JSON.parse(claudeClean)
 
+        // Apply ingredient groups if Claude detected them
+        let ingredientGroups = jsonldRecipe.ingredient_groups as Record<string,unknown>[]
+        if (claudeExtras.ingredient_groups && Array.isArray(claudeExtras.ingredient_groups)) {
+          // Claude found groups - use them but verify ingredient count matches
+          const claudeIngCount = claudeExtras.ingredient_groups.reduce((n: number, g: Record<string,unknown>) => n + ((g.ingredients as unknown[]) || []).length, 0)
+          const jsonldIngCount = ingredients.length
+          if (claudeIngCount === jsonldIngCount) {
+            // Counts match - safe to use Claude groups with JSON-LD qty/names
+            ingredientGroups = claudeExtras.ingredient_groups
+          }
+        }
+
         // Merge: JSON-LD for ingredients/steps, Claude for metadata
         recipe = {
           ...jsonldRecipe,
+          ingredient_groups: ingredientGroups,
           description: claudeExtras.description || jsonldRecipe.description,
           before_you_begin: claudeExtras.before_you_begin || null,
           tags: claudeExtras.tags || [],
