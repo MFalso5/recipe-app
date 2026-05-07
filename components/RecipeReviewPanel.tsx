@@ -114,8 +114,27 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
 
   const sectionGap = compact ? 14 : 18
 
+  const dataSource = (recipe as Record<string, unknown>).data_source as string | undefined
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: sectionGap }}>
+
+      {/* DATA SOURCE BANNER */}
+      {dataSource === 'claude' && (
+        <div style={{ background: '#FEF9C3', border: '1px solid #FDE047', borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#854D0E', marginBottom: 2 }}>AI-extracted recipe — verify carefully</div>
+            <div style={{ fontSize: 12, color: '#92400E' }}>No structured data was found on this page. Ingredients and quantities were extracted by AI and may contain errors. Please compare with the original before saving.</div>
+          </div>
+        </div>
+      )}
+      {dataSource === 'jsonld' && (
+        <div style={{ background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 10, padding: '10px 14px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>✅</span>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#166534' }}>Ingredients and steps imported directly from site structured data — high accuracy</div>
+        </div>
+      )}
 
       {/* HERO IMAGE */}
       <div>
