@@ -251,7 +251,7 @@ ${cleanHtml}`
         if (claudeExtras.ingredient_groups && Array.isArray(claudeExtras.ingredient_groups)) {
           // Claude found groups - use them but verify ingredient count matches
           const claudeIngCount = claudeExtras.ingredient_groups.reduce((n: number, g: Record<string,unknown>) => n + ((g.ingredients as unknown[]) || []).length, 0)
-          const jsonldIngCount = ingredients.length
+          const jsonldIngCount = (jsonLdSchema.recipeIngredient as unknown[]).length
           if (claudeIngCount === jsonldIngCount) {
             // Counts match - safe to use Claude groups with JSON-LD qty/names
             ingredientGroups = claudeExtras.ingredient_groups
