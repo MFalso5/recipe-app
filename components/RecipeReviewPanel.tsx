@@ -300,8 +300,8 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
                 set('ingredient_groups', gs)
               }} />
             {g.ingredients.map((ing: Ingredient, ii: number) => (
-              <div key={ii} style={{ display: 'flex', gap: 6, marginBottom: 5, background: (ing as Record<string,unknown>).needs_review ? '#FFFBEB' : 'transparent', borderRadius: 6, padding: (ing as Record<string,unknown>).needs_review ? '3px' : '0' }}>
-                <input className="input" style={{ width: 70, flexShrink: 0, fontSize: 13, borderColor: ing.qty === '?' ? 'var(--red)' : (ing as Record<string,unknown>).needs_review ? '#F59E0B' : undefined }}
+              <div key={ii} style={{ display: 'flex', gap: 6, marginBottom: 5, background: (ing as unknown as Record<string,unknown>).needs_review ? '#FFFBEB' : 'transparent', borderRadius: 6, padding: (ing as unknown as Record<string,unknown>).needs_review ? '3px' : '0' }}>
+                <input className="input" style={{ width: 70, flexShrink: 0, fontSize: 13, borderColor: ing.qty === '?' ? 'var(--red)' : (ing as unknown as Record<string,unknown>).needs_review ? '#F59E0B' : undefined }}
                   value={ing.qty} onChange={e => {
                     const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients[ii] = { ...ing, qty: e.target.value }
                     set('ingredient_groups', gs)
