@@ -322,7 +322,7 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
             }} style={{ background: 'none', border: '1px dashed var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'inherit', marginTop: 2 }}>+ Add</button>
           </div>
         ))}
-        {(recipe.ingredient_groups || []).some(g => g.ingredients.some((i: Ingredient) => i.qty === '?' || (i as Record<string,unknown>).needs_review)) && (
+        {(recipe.ingredient_groups || []).some(g => g.ingredients.some((i: Ingredient) => i.qty === '?' || (i as unknown as Record<string,unknown>).needs_review)) && (
           <p style={{ fontSize: 11, color: '#92400E', background: '#FFFBEB', border: '1px solid #F59E0B', borderRadius: 6, padding: '6px 10px', marginTop: 4 }}>⚠️ Some ingredients are highlighted in yellow — the parser wasn&apos;t confident about the quantity. Check the qty field for each highlighted row before saving.</p>
         )}
       </div>
