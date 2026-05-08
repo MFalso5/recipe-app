@@ -300,8 +300,8 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
                 set('ingredient_groups', gs)
               }} />
             {g.ingredients.map((ing: Ingredient, ii: number) => (
-              <div key={ii} style={{ display: 'flex', gap: 6, marginBottom: 5 }}>
-                <input className="input" style={{ width: 70, flexShrink: 0, fontSize: 13, borderColor: ing.qty === '?' ? 'var(--red)' : undefined }}
+              <div key={ii} style={{ display: 'flex', gap: 6, marginBottom: 5, background: (ing as Record<string,unknown>).needs_review ? '#FFFBEB' : 'transparent', borderRadius: 6, padding: (ing as Record<string,unknown>).needs_review ? '3px' : '0' }}>
+                <input className="input" style={{ width: 70, flexShrink: 0, fontSize: 13, borderColor: ing.qty === '?' ? 'var(--red)' : (ing as Record<string,unknown>).needs_review ? '#F59E0B' : undefined }}
                   value={ing.qty} onChange={e => {
                     const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients[ii] = { ...ing, qty: e.target.value }
                     set('ingredient_groups', gs)
@@ -322,8 +322,8 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
             }} style={{ background: 'none', border: '1px dashed var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'inherit', marginTop: 2 }}>+ Add</button>
           </div>
         ))}
-        {(recipe.ingredient_groups || []).some(g => g.ingredients.some((i: Ingredient) => i.qty === '?')) && (
-          <p style={{ fontSize: 11, color: 'var(--red)' }}>⚠️ Some quantities need review — marked in red</p>
+        {(recipe.ingredient_groups || []).some(g => g.ingredients.some((i: Ingredient) => i.qty === '?' || (i as Record<string,unknown>).needs_review)) && (
+          <p style={{ fontSize: 11, color: '#92400E', background: '#FFFBEB', border: '1px solid #F59E0B', borderRadius: 6, padding: '6px 10px', marginTop: 4 }}>⚠️ Some ingredients are highlighted in yellow — the parser wasn&apos;t confident about the quantity. Check the qty field for each highlighted row before saving.</p>
         )}
       </div>
 
