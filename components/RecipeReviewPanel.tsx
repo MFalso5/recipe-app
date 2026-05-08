@@ -54,10 +54,41 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
   const [imgUploading, setImgUploading] = React.useState(false)
   const [galleryUploading, setGalleryUploading] = React.useState(false)
   const [customTag, setCustomTag] = React.useState('')
+  const [draggingFrom, setDraggingFrom] = React.useState<{gi: number, ii: number} | null>(null)
+  const [dragOver, setDragOver] = React.useState<{gi: number, ii: number, pos: 'before' | 'after'} | null>(null)
   const imgRef = React.useRef<HTMLInputElement>(null)
   const galleryRef = React.useRef<HTMLInputElement>(null)
 
   const set = (key: string, val: unknown) => onChange({ ...recipe, [key]: val })
+
+  // Move ingredient from one position to another, across groups
+  const handleIngredientDrop = (targetGi: number, targetIi: number) => {
+    if (!draggingFrom) return
+    const { gi: fromGi, ii: fromIi } = draggingFrom
+    const pos = dragOver?.pos || 'after'
+
+    // No-op if dropping on itself
+    if (fromGi === targetGi && fromIi === targetIi) {
+      setDraggingFrom(null); setDragOver(null); return
+    }
+
+    // Deep copy groups
+    const gs = (recipe.ingredient_groups || []).map(g => ({ ...g, ingredients: [...g.ingredients] }))
+
+    // Remove from source
+    const [moved] = gs[fromGi].ingredients.splice(fromIi, 1)
+
+    // Adjust target index if same group and source was before target
+    let insertIi = targetIi
+    if (fromGi === targetGi && fromIi < targetIi) insertIi = targetIi - 1
+
+    const insertAt = pos === 'after' ? insertIi + 1 : insertIi
+    gs[targetGi].ingredients.splice(insertAt, 0, moved)
+
+    set('ingredient_groups', gs)
+    setDraggingFrom(null)
+    setDragOver(null)
+  }
 
   // All images available for hero selection
   const allImages = [
@@ -104,8 +135,6 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
     set('dietary_tags', current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag])
   }
 
-  const sourceOk = true // Source optional
-
   const labelStyle: React.CSSProperties = {
     fontSize: 10, fontWeight: 600, letterSpacing: .8,
     textTransform: 'uppercase', color: 'var(--muted)',
@@ -113,7 +142,6 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
   }
 
   const sectionGap = compact ? 14 : 18
-
   const dataSource = (recipe as Record<string, unknown>).data_source as string | undefined
 
   return (
@@ -146,8 +174,6 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
             <button onClick={() => set('image_url', null)} style={{ position: 'absolute', top: 8, right: 8, width: 26, height: 26, borderRadius: '50%', background: 'rgba(0,0,0,.5)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
           </div>
         )}
-
-        {/* IMAGE THUMBNAILS TO PICK FROM */}
         {allImages.length > 1 && (
           <div style={{ marginBottom: 10 }}>
             <div style={{ fontSize: 10, color: 'var(--muted)', marginBottom: 6 }}>Tap to set as hero:</div>
@@ -166,8 +192,6 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
             </div>
           </div>
         )}
-
-        {/* UPLOAD ZONE */}
         <div onClick={() => imgRef.current?.click()} onDragOver={e => e.preventDefault()}
           onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleHeroUpload(f) }}
           style={{ border: '2px dashed var(--border)', borderRadius: 8, padding: '10px 14px', textAlign: 'center', cursor: 'pointer', background: 'var(--cream)', fontSize: 13, color: 'var(--muted)' }}>
@@ -183,11 +207,8 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
           <input className="input" value={recipe.title || ''} onChange={e => set('title', e.target.value)} />
         </div>
         <div>
-          <label style={{ ...labelStyle, color: 'var(--muted)' }}>
-            Source (optional)
-          </label>
-          <input className="input" style={{  }}
-            value={recipe.source || ''} onChange={e => set('source', e.target.value)}
+          <label style={{ ...labelStyle, color: 'var(--muted)' }}>Source (optional)</label>
+          <input className="input" value={recipe.source || ''} onChange={e => set('source', e.target.value)}
             placeholder="e.g. Sip and Feast (leave blank for General Recipes)" />
         </div>
         <div>
@@ -255,7 +276,6 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
             return <button key={tag} onClick={() => toggleTag(tag)} style={{ padding: '4px 10px', borderRadius: 50, fontSize: 11, fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', background: active ? 'var(--tag)' : 'var(--cream)', border: '1px solid ' + (active ? 'var(--border)' : 'transparent'), color: active ? 'var(--ink)' : 'var(--muted)' }}>{tag}</button>
           })}
         </div>
-        {/* Custom tags */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
           {(recipe.tags || []).filter(t => !TIER1.includes(t) && !TIER2.includes(t) && !TIER3.includes(t)).map(t => (
             <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 9px', borderRadius: 50, fontSize: 11, background: 'var(--tag)', border: '1px solid var(--border)', color: 'var(--ink)' }}>
@@ -290,6 +310,7 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
       <div>
         <label style={labelStyle}>
           Ingredients — {(recipe.ingredient_groups || []).reduce((n, g) => n + g.ingredients.length, 0)} items
+          {draggingFrom && <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--accent)', marginLeft: 8 }}>Drop to reorder</span>}
         </label>
         {(recipe.ingredient_groups || []).map((g, gi) => (
           <div key={gi} style={{ marginBottom: 10, padding: 10, background: 'var(--cream)', borderRadius: 8 }}>
@@ -299,29 +320,77 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
                 const gs = [...(recipe.ingredient_groups || [])]; gs[gi] = { ...gs[gi], group_name: e.target.value || null }
                 set('ingredient_groups', gs)
               }} />
+
             {g.ingredients.map((ing: Ingredient, ii: number) => (
-              <div key={ii} style={{ display: 'flex', gap: 6, marginBottom: 5, background: (ing as unknown as Record<string,unknown>).needs_review ? '#FFFBEB' : 'transparent', borderRadius: 6, padding: (ing as unknown as Record<string,unknown>).needs_review ? '3px' : '0' }}>
-                <input className="input" style={{ width: 70, flexShrink: 0, fontSize: 13, borderColor: ing.qty === '?' ? 'var(--red)' : (ing as unknown as Record<string,unknown>).needs_review ? '#F59E0B' : undefined }}
-                  value={ing.qty} onChange={e => {
-                    const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients[ii] = { ...ing, qty: e.target.value }
+              <div key={ii}
+                onDragOver={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const rect = e.currentTarget.getBoundingClientRect()
+                  setDragOver({ gi, ii, pos: e.clientY < rect.top + rect.height / 2 ? 'before' : 'after' })
+                }}
+                onDrop={e => { e.preventDefault(); e.stopPropagation(); handleIngredientDrop(gi, ii) }}
+                style={{ position: 'relative' }}>
+
+                {/* Drop indicator — before */}
+                {dragOver?.gi === gi && dragOver?.ii === ii && dragOver?.pos === 'before' && (
+                  <div style={{ height: 2, background: 'var(--accent)', borderRadius: 2, marginBottom: 3 }} />
+                )}
+
+                <div
+                  draggable
+                  onDragStart={() => setDraggingFrom({ gi, ii })}
+                  onDragEnd={() => { setDraggingFrom(null); setDragOver(null) }}
+                  style={{
+                    display: 'flex', gap: 6, marginBottom: 5,
+                    background: (ing as unknown as Record<string,unknown>).needs_review ? '#FFFBEB' : 'transparent',
+                    borderRadius: 6,
+                    padding: (ing as unknown as Record<string,unknown>).needs_review ? '3px' : '0',
+                    opacity: draggingFrom?.gi === gi && draggingFrom?.ii === ii ? 0.4 : 1,
+                    transition: 'opacity .15s'
+                  }}>
+
+                  {/* Drag handle */}
+                  <div style={{ cursor: 'grab', color: 'var(--muted)', fontSize: 15, display: 'flex', alignItems: 'center', flexShrink: 0, opacity: 0.4, userSelect: 'none', paddingRight: 1 }}>⠿</div>
+
+                  <input className="input" style={{ width: 70, flexShrink: 0, fontSize: 13, borderColor: ing.qty === '?' ? 'var(--red)' : (ing as unknown as Record<string,unknown>).needs_review ? '#F59E0B' : undefined }}
+                    value={ing.qty} onChange={e => {
+                      const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients[ii] = { ...ing, qty: e.target.value }
+                      set('ingredient_groups', gs)
+                    }} />
+                  <input className="input" style={{ fontSize: 13 }} value={ing.name} onChange={e => {
+                    const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients[ii] = { ...ing, name: e.target.value }
                     set('ingredient_groups', gs)
                   }} />
-                <input className="input" style={{ fontSize: 13 }} value={ing.name} onChange={e => {
-                  const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients[ii] = { ...ing, name: e.target.value }
-                  set('ingredient_groups', gs)
-                }} />
-                <button onClick={() => {
-                  const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients = gs[gi].ingredients.filter((_: unknown, j: number) => j !== ii)
-                  set('ingredient_groups', gs)
-                }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 15, flexShrink: 0 }}>✕</button>
+                  <button onClick={() => {
+                    const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients = gs[gi].ingredients.filter((_: unknown, j: number) => j !== ii)
+                    set('ingredient_groups', gs)
+                  }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 15, flexShrink: 0 }}>✕</button>
+                </div>
+
+                {/* Drop indicator — after */}
+                {dragOver?.gi === gi && dragOver?.ii === ii && dragOver?.pos === 'after' && (
+                  <div style={{ height: 2, background: 'var(--accent)', borderRadius: 2, marginBottom: 3 }} />
+                )}
               </div>
             ))}
+
+            {/* Drop zone at end of group */}
+            {draggingFrom && (
+              <div
+                onDragOver={e => { e.preventDefault(); setDragOver({ gi, ii: g.ingredients.length - 1, pos: 'after' }) }}
+                onDrop={e => { e.preventDefault(); handleIngredientDrop(gi, g.ingredients.length - 1) }}
+                style={{ height: 10, borderRadius: 4, background: 'transparent' }}
+              />
+            )}
+
             <button onClick={() => {
               const gs = [...(recipe.ingredient_groups || [])]; gs[gi].ingredients.push({ qty: '', name: '' })
               set('ingredient_groups', gs)
             }} style={{ background: 'none', border: '1px dashed var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'inherit', marginTop: 2 }}>+ Add</button>
           </div>
         ))}
+
         {(recipe.ingredient_groups || []).some(g => g.ingredients.some((i: Ingredient) => i.qty === '?' || (i as unknown as Record<string,unknown>).needs_review)) && (
           <p style={{ fontSize: 11, color: '#92400E', background: '#FFFBEB', border: '1px solid #F59E0B', borderRadius: 6, padding: '6px 10px', marginTop: 4 }}>⚠️ Some ingredients are highlighted in yellow — the parser wasn&apos;t confident about the quantity. Check the qty field for each highlighted row before saving.</p>
         )}
@@ -442,9 +511,7 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
             </p>
           </div>
         )}
-
-        <button onClick={onSave} className="btn btn-green" disabled={saving}
-          >
+        <button onClick={onSave} className="btn btn-green" disabled={saving}>
           {saving ? '⟳ Saving...' : '✓ Save to Library'}
         </button>
       </div>
