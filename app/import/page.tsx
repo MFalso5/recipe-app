@@ -219,7 +219,8 @@ export default function ImportPage() {
 
   const saveAndView = async () => {
     if (!parsed) return
-    const recipe: Recipe = {
+
+    const mainRecipe: Recipe = {
       ...parsed,
       id: crypto.randomUUID(),
       made: false,
@@ -227,7 +228,59 @@ export default function ImportPage() {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
-    const res = await fetch('/api/recipes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recipe) })
+
+    // Save any checked sub-recipes as separate recipes and link them back
+    const subRecipes = (parsed as Record<string, unknown>).sub_recipes as Record<string, unknown>[] | null
+    const excluded = (parsed as Record<string, unknown>).excluded_sub_recipes as number[] || []
+
+    if (subRecipes && subRecipes.length > 0) {
+      const selected = subRecipes.filter((_, i) => !excluded.includes(i))
+      const savedMap: Record<string, string> = {} // lowercase title → saved id
+
+      for (const sr of selected) {
+        const subId = crypto.randomUUID()
+        const subRecipe = {
+          ...(sr as object),
+          id: subId,
+          made: false,
+          source: mainRecipe.source,
+          source_url: mainRecipe.source_url,
+          source_type: mainRecipe.source_type,
+          tags: [],
+          dietary_tags: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        await fetch('/api/recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subRecipe)
+        })
+        savedMap[String(sr.title || '').toLowerCase()] = subId
+      }
+
+      // Link saved sub-recipe IDs back to the parent ingredient rows
+      if (Object.keys(savedMap).length > 0) {
+        mainRecipe.ingredient_groups = (mainRecipe.ingredient_groups || []).map(g => ({
+          ...g,
+          ingredients: g.ingredients.map(ing => {
+            if (ing.is_linked_recipe && !ing.linked_recipe_id) {
+              const match = Object.entries(savedMap).find(([title]) =>
+                ing.name.toLowerCase().includes(title)
+              )
+              if (match) return { ...ing, linked_recipe_id: match[1] }
+            }
+            return ing
+          })
+        }))
+      }
+    }
+
+    const res = await fetch('/api/recipes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mainRecipe)
+    })
     const data = await res.json()
     router.push('/recipe/' + data.recipe.id)
   }
