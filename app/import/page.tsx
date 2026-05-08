@@ -264,7 +264,7 @@ export default function ImportPage() {
         mainRecipe.ingredient_groups = (mainRecipe.ingredient_groups || []).map(g => ({
           ...g,
           ingredients: g.ingredients.map(ing => {
-            if (ing.is_linked_recipe && !ing.linked_recipe_id) {
+            if ((ing as unknown as Record<string,unknown>).is_linked_recipe && !ing.linked_recipe_id) {
               const match = Object.entries(savedMap).find(([title]) =>
                 ing.name.toLowerCase().includes(title)
               )
