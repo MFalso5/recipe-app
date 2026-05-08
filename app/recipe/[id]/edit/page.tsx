@@ -107,6 +107,8 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
   const [saving, setSaving] = useState(false)
   const [imgUploading, setImgUploading] = useState(false)
   const [imgDragOver, setImgDragOver] = useState(false)
+  const [draggingFrom, setDraggingFrom] = useState<{gi: number, ii: number} | null>(null)
+  const [dragOver, setDragOver] = useState<{gi: number, ii: number, pos: 'before' | 'after'} | null>(null)
   const imgRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -116,6 +118,24 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
   }, [params.id])
 
   const set = (key: string, val: unknown) => setRecipe(prev => prev ? { ...prev, [key]: val } : prev)
+
+  const handleIngredientDrop = (targetGi: number, targetIi: number) => {
+    if (!draggingFrom || !recipe) return
+    const { gi: fromGi, ii: fromIi } = draggingFrom
+    const pos = dragOver?.pos || 'after'
+    if (fromGi === targetGi && fromIi === targetIi) {
+      setDraggingFrom(null); setDragOver(null); return
+    }
+    const gs = recipe.ingredient_groups.map(g => ({ ...g, ingredients: [...g.ingredients] }))
+    const [moved] = gs[fromGi].ingredients.splice(fromIi, 1)
+    let insertIi = targetIi
+    if (fromGi === targetGi && fromIi < targetIi) insertIi = targetIi - 1
+    const insertAt = pos === 'after' ? insertIi + 1 : insertIi
+    gs[targetGi].ingredients.splice(insertAt, 0, moved)
+    set('ingredient_groups', gs)
+    setDraggingFrom(null)
+    setDragOver(null)
+  }
 
   const handleImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) return
@@ -331,32 +351,55 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
                 placeholder="Group name (optional)" value={g.group_name || ''}
                 onChange={e => { const gs = [...recipe.ingredient_groups]; gs[gi] = { ...gs[gi], group_name: e.target.value || null }; set('ingredient_groups', gs) }} />
               {g.ingredients.map((ing, ii) => (
-                <div key={ii} style={{ marginBottom: 8 }}>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input className="input" style={{ width: 80, flexShrink: 0 }} value={ing.qty}
-                      onChange={e => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients[ii] = { ...ing, qty: e.target.value }; set('ingredient_groups', gs) }} />
-                    <input className="input" value={ing.name}
-                      onChange={e => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients[ii] = { ...ing, name: e.target.value }; set('ingredient_groups', gs) }} />
-                    <button onClick={() => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients = gs[gi].ingredients.filter((_, j) => j !== ii); set('ingredient_groups', gs) }}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16 }}>✕</button>
+                <div key={ii}
+                  onDragOver={e => { e.preventDefault(); const r = e.currentTarget.getBoundingClientRect(); setDragOver({gi, ii, pos: e.clientY < r.top + r.height / 2 ? 'before' : 'after'}) }}
+                  onDrop={e => { e.preventDefault(); handleIngredientDrop(gi, ii) }}
+                  style={{ position: 'relative' }}>
+                  {dragOver?.gi === gi && dragOver?.ii === ii && dragOver?.pos === 'before' && (
+                    <div style={{ height: 2, background: 'var(--accent)', borderRadius: 2, marginBottom: 3 }} />
+                  )}
+                  <div
+                    draggable
+                    onDragStart={() => setDraggingFrom({gi, ii})}
+                    onDragEnd={() => { setDraggingFrom(null); setDragOver(null) }}
+                    style={{ marginBottom: 8, opacity: draggingFrom?.gi === gi && draggingFrom?.ii === ii ? 0.4 : 1, transition: 'opacity .15s' }}>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div style={{ cursor: 'grab', color: 'var(--muted)', fontSize: 15, flexShrink: 0, opacity: 0.4, userSelect: 'none' as const }}>⠿</div>
+                      <input className="input" style={{ width: 80, flexShrink: 0 }} value={ing.qty}
+                        onChange={e => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients[ii] = { ...ing, qty: e.target.value }; set('ingredient_groups', gs) }} />
+                      <input className="input" value={ing.name}
+                        onChange={e => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients[ii] = { ...ing, name: e.target.value }; set('ingredient_groups', gs) }} />
+                      <button onClick={() => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients = gs[gi].ingredients.filter((_, j) => j !== ii); set('ingredient_groups', gs) }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16 }}>✕</button>
+                    </div>
+                    {ing.linked_recipe_id ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, paddingLeft: 104 }}>
+                        <span style={{ fontSize: 11, color: 'var(--accent)' }}>📎 Linked: {ing.linked_recipe_title}</span>
+                        <button onClick={() => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients[ii] = { ...ing, linked_recipe_id: null, linked_recipe_title: null }; set('ingredient_groups', gs) }}
+                          style={{ fontSize: 11, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}>unlink</button>
+                      </div>
+                    ) : (
+                      <div style={{ paddingLeft: 104, marginTop: 2 }}>
+                        <LinkedRecipePicker name={ing.name} onLink={(id, title) => {
+                          const gs = [...recipe.ingredient_groups]
+                          gs[gi].ingredients[ii] = { ...ing, linked_recipe_id: id, linked_recipe_title: title }
+                          set('ingredient_groups', gs)
+                        }} />
+                      </div>
+                    )}
                   </div>
-                  {ing.linked_recipe_id ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, paddingLeft: 88 }}>
-                      <span style={{ fontSize: 11, color: 'var(--accent)' }}>📎 Linked: {ing.linked_recipe_title}</span>
-                      <button onClick={() => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients[ii] = { ...ing, linked_recipe_id: null, linked_recipe_title: null }; set('ingredient_groups', gs) }}
-                        style={{ fontSize: 11, color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer' }}>unlink</button>
-                    </div>
-                  ) : (
-                    <div style={{ paddingLeft: 88, marginTop: 2 }}>
-                      <LinkedRecipePicker name={ing.name} onLink={(id, title) => {
-                        const gs = [...recipe.ingredient_groups]
-                        gs[gi].ingredients[ii] = { ...ing, linked_recipe_id: id, linked_recipe_title: title }
-                        set('ingredient_groups', gs)
-                      }} />
-                    </div>
+                  {dragOver?.gi === gi && dragOver?.ii === ii && dragOver?.pos === 'after' && (
+                    <div style={{ height: 2, background: 'var(--accent)', borderRadius: 2, marginBottom: 3 }} />
                   )}
                 </div>
               ))}
+              {draggingFrom && (
+                <div
+                  onDragOver={e => { e.preventDefault(); setDragOver({gi, ii: g.ingredients.length - 1, pos: 'after'}) }}
+                  onDrop={e => { e.preventDefault(); handleIngredientDrop(gi, g.ingredients.length - 1) }}
+                  style={{ height: 10, borderRadius: 4 }}
+                />
+              )}
               <button onClick={() => { const gs = [...recipe.ingredient_groups]; gs[gi].ingredients.push({ qty: '', name: '' }); set('ingredient_groups', gs) }}
                 style={{ background: 'none', border: '1.5px dashed var(--border)', borderRadius: 8, padding: '6px 12px', fontSize: 13, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'inherit', marginTop: 4 }}>+ Add ingredient</button>
             </div>
