@@ -697,18 +697,41 @@ function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, 
 function CollectionCard({ collection, onClick }: { collection: Collection, onClick: () => void }) {
   const photos = collection.recipes.map(r => r.image_url).filter(Boolean).slice(0, 4) as string[]
   const madeCount = collection.recipes.filter(r => r.made).length
+  const isOtherCookbooks = collection.name === 'Other Cookbooks'
+  const isBlogsAndSocial = collection.name === 'Blogs & Social'
+
   return (
     <div onClick={onClick} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', cursor: 'pointer', transition: 'transform .18s, box-shadow .18s' }}
       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 32px rgba(0,0,0,.1)' }}
       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}>
-      <div style={{ height: 160, display: 'grid', gridTemplateColumns: photos.length >= 2 ? '1fr 1fr' : '1fr', gridTemplateRows: photos.length >= 3 ? '1fr 1fr' : '1fr', gap: 2, background: 'var(--tag)' }}>
-        {photos.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>📚</div>
-          : photos.slice(0, 4).map((url, i) => (
-            <div key={i} style={{ overflow: 'hidden', gridColumn: photos.length === 1 ? '1/-1' : undefined, gridRow: photos.length === 3 && i === 0 ? '1/3' : undefined }}>
-              <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-            </div>
-          ))}
-      </div>
+
+      {isOtherCookbooks ? (
+        <div style={{ height: 160, background: '#D8EBCF', display: 'flex', overflow: 'hidden' }}>
+          <div style={{ width: 14, background: '#4A7A3A', flexShrink: 0 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 12 }}>
+            <div style={{ fontSize: 36, lineHeight: 1 }}>📚</div>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: '#4A7A3A', textAlign: 'center' as const, lineHeight: 1.4 }}>Other<br />Cookbooks</div>
+          </div>
+        </div>
+      ) : isBlogsAndSocial ? (
+        <div style={{ height: 160, background: '#EEF2FF', display: 'flex', overflow: 'hidden' }}>
+          <div style={{ width: 14, background: '#4F6BDB', flexShrink: 0 }} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 12 }}>
+            <div style={{ fontSize: 36, lineHeight: 1 }}>🌐</div>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: '#4F6BDB', textAlign: 'center' as const, lineHeight: 1.4 }}>Blogs &<br />Social</div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ height: 160, display: 'grid', gridTemplateColumns: photos.length >= 2 ? '1fr 1fr' : '1fr', gridTemplateRows: photos.length >= 3 ? '1fr 1fr' : '1fr', gap: 2, background: 'var(--tag)' }}>
+          {photos.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>📚</div>
+            : photos.slice(0, 4).map((url, i) => (
+              <div key={i} style={{ overflow: 'hidden', gridColumn: photos.length === 1 ? '1/-1' : undefined, gridRow: photos.length === 3 && i === 0 ? '1/3' : undefined }}>
+                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </div>
+            ))}
+        </div>
+      )}
+
       <div style={{ padding: '14px 16px 16px' }}>
         <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, marginBottom: 5 }}>{collection.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, color: 'var(--muted)' }}>
