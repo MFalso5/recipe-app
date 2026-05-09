@@ -205,10 +205,10 @@ export default function FoodForThoughtPage() {
                 onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <a href={entry.url} target="_blank" rel="noreferrer" style={{ fontFamily: 'Playfair Display, serif', fontSize: 17, fontWeight: 600, color: 'var(--ink)', textDecoration: 'none', display: 'block', marginBottom: 4 }}>
+                    <a href={entry.url || "#"} target="_blank" rel="noreferrer" style={{ fontFamily: 'Playfair Display, serif', fontSize: 17, fontWeight: 600, color: 'var(--ink)', textDecoration: 'none', display: 'block', marginBottom: 4 }}>
                       {entry.title} ↗
                     </a>
-                    <a href={entry.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none', opacity: .8, display: 'block', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <a href={entry.url || "#"} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none', opacity: .8, display: 'block', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {entry.url}
                     </a>
                     {entry.description && <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, marginBottom: 8 }}>{entry.description}</p>}
