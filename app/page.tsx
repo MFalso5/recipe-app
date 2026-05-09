@@ -477,7 +477,7 @@ export default function Home() {
                         <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 700 }}>🥑 Keto</h2>
                         <span style={{ fontSize: 13, color: 'var(--muted)' }}>{ketoRecipes.length} recipes</span>
                       </div>
-                      <RecipeGrid recipes={ketoRecipes} />
+                      <RecipeGrid recipes={ketoRecipes} cookbooks={cookbooks} />
                     </div>
                   )}
                 </>
@@ -512,7 +512,7 @@ export default function Home() {
                   <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                     <p style={{ color: 'var(--muted)', fontSize: 15 }}>No recipes match your search.</p>
                   </div>
-                ) : <RecipeGrid recipes={smartResults !== null ? filterRecipes(activeCollection.recipes) : filterRecipesWithFilters(activeCollection.recipes)} />}
+                ) : <RecipeGrid recipes={smartResults !== null ? filterRecipes(activeCollection.recipes) : filterRecipesWithFilters(activeCollection.recipes)} cookbooks={cookbooks} />}
               </>
             )}
 
