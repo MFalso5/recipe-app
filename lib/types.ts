@@ -81,7 +81,7 @@ export interface Recipe {
 }
 
 export interface Collection {
-  name: string | null
+  name: string
   recipes: Recipe[]
   source_type: 'website' | 'cookbook' | 'other'
   author?: string | null
