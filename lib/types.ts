@@ -8,38 +8,29 @@ export interface Variation {
 export interface Ingredient {
   qty: string
   name: string
-  note: string | null
-  is_linked_recipe: boolean
+  note?: string | null
   linked_recipe_id?: string | null
+  linked_recipe_title?: string | null
+  is_linked_recipe?: boolean
   needs_review?: boolean
 }
 
-export interface Step {
-  text: string
-  time: string | null
-  note: string | null
-  photo_url: string | null
-}
-
 export interface IngredientGroup {
-  name: string | null
-  group_name?: string | null
+  group_name: string | null
   ingredients: Ingredient[]
 }
 
-export interface StepGroup {
-  name: string | null
-  group_name?: string | null
-  steps: Step[]
+export interface Step {
+  num: number
+  time: string | null
+  text: string
+  note?: string | null
+  photo_url?: string | null
 }
 
-export interface SubRecipe {
-  name: string
-  ingredient_groups: IngredientGroup[]
-  step_groups: StepGroup[]
-  source?: string | null
-  source_url?: string | null
-  source_type?: 'website' | 'cookbook' | 'image' | 'manual'
+export interface StepGroup {
+  group_name: string | null
+  steps: Step[]
 }
 
 export interface MadeItEntry {
@@ -49,83 +40,56 @@ export interface MadeItEntry {
   rating: 'would-make-again' | 'make-with-changes' | 'wouldnt-make-again' | null
 }
 
+export interface SubRecipe {
+  title: string
+  description: string | null
+  ingredient_groups: IngredientGroup[]
+  step_groups: StepGroup[]
+  source?: string | null
+  source_url?: string | null
+  source_type?: 'website' | 'cookbook' | 'image' | 'manual'
+}
+
 export interface Recipe {
   id: string
   title: string
-  source: string | null
+  source: string
   source_url: string | null
-  source_type: 'website' | 'cookbook' | 'image' | 'manual'
-  data_source?: 'jsonld' | 'claude'
-  description: string | null
-  yield: string | null
+  page_number: string | null
+  description: string
+  yield: string
   time_active: string | null
   temperature: string | null
   before_you_begin: string | null
-  equipment: string[] | null
-  image_url: string | null
+  equipment: string | null
   ingredient_groups: IngredientGroup[]
   step_groups: StepGroup[]
   notes: string[] | null
   tips: string[] | null
   storage: string | null
-  variations: Variation[] | null
-  sub_recipes: SubRecipe[] | null
+  image_url: string | null
+  gallery_urls: string[]
   made: boolean
   favorited: boolean
-  made_log: MadeItEntry[] | null
-  gallery_urls: string[] | null
-  page_number: string | null
-  share_token: string | null
-  cookbook_author: string | null
-  cookbook_cover_url: string | null
+  made_log: MadeItEntry[]
   tags: string[]
   dietary_tags: string[]
+  collections: string[]
+  source_type: 'cookbook' | 'website' | 'other'
+  cookbook_author: string | null
+  cookbook_cover_url: string | null
+  share_token: string | null
+  data_source?: 'jsonld' | 'claude'
+  variations: Variation[] | null
+  sub_recipes: SubRecipe[] | null
   created_at: string
   updated_at: string
 }
 
-
-
-export interface Cookbook {
+export interface MenuCourse {
   id: string
   name: string
-  author: string | null
-  pub_year: string | null
-  cover_url: string | null
-  recipe_count?: number
-  made_count?: number
-  created_at: string
-  updated_at: string
-}
-
-export interface FoodForThoughtEntry {
-  id: string
-  title: string
-  url: string | null
-  description: string | null
-  notes: string | null
-  tags: string[]
-  created_at: string
-  updated_at: string
-}
-
-export interface IdeaNote {
-  id: string
-  title: string
-  content: string | null
-  is_scratchpad?: boolean
-  tags?: string[]
-  created_at: string
-  updated_at: string
-}
-
-export interface MakeAheadEntry {
-  id: string
-  task: string
-  timeframe: string | null
-  recipe_id: string | null
-  recipe_title: string | null
-  confirmed: boolean
+  recipes: MenuRecipeEntry[]
 }
 
 export interface MenuRecipeEntry {
@@ -136,22 +100,36 @@ export interface MenuRecipeEntry {
   is_free_text: boolean
 }
 
-export interface MenuCourse {
+export interface MakeAheadEntry {
   id: string
-  name: string
-  recipes: MenuRecipeEntry[]
+  task: string
+  timeframe: string
+  recipe_id: string | null
+  recipe_title: string | null
+  confirmed: boolean
 }
 
 export interface Menu {
   id: string
   name: string
+  occasion: string | null
   date: string | null
   notes: string | null
-  overview: string | null
   courses: MenuCourse[]
   make_ahead: MakeAheadEntry[]
   created_at: string
   updated_at: string
+}
+
+export interface ShoppingListItem {
+  id: string
+  ingredient: string
+  total_qty: string
+  unit: string
+  category: string
+  checked: boolean
+  breakdown: { recipe_title: string; qty: string }[]
+  include_linked: boolean
 }
 
 export interface PrepSession {
@@ -164,15 +142,45 @@ export interface PrepSession {
 export interface MealPrep {
   id: string
   name: string
-  week_start: string | null
   date: string | null
-  sessions: PrepSession[]
   notes: string | null
+  sessions: PrepSession[]
   created_at: string
   updated_at: string
 }
 
-export const DEFAULT_COURSES: readonly string[] = [
+export interface IdeaNote {
+  id: string
+  title: string
+  content: string
+  is_scratchpad: boolean
+  tags?: string[]
+  created_at: string
+  updated_at: string
+}
+
+export interface FoodForThoughtEntry {
+  id: string
+  url: string
+  title: string
+  description: string | null
+  notes: string | null
+  tags: string[]
+  created_at: string
+  updated_at: string
+}
+
+export interface Cookbook {
+  id: string
+  name: string
+  author: string | null
+  pub_year: string | null
+  cover_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+export const DEFAULT_COURSES: string[] = [
   'Cold Bread',
   'Appetizer',
   'Hot Appetizer',
@@ -184,26 +192,24 @@ export const DEFAULT_COURSES: readonly string[] = [
   'Dessert (Pie)',
   'Dessert (Cake)',
   'Drinks',
-  'Alcoholic Beverages',
-] 
+  'Alcoholic Beverages'
+]
 
-export const MAKE_AHEAD_TIMEFRAMES: readonly string[] = [
-  'Day of',
-  'Day before',
-  '2 days before',
+export const DIETARY_TAGS: string[] = [
+  'Vegan', 'Vegetarian', 'Gluten Free', 'Dairy Free',
+  'Keto', 'Paleo', 'Sugar Free', 'Nut Free', 'Low Carb', 'Whole30'
+]
+
+export const SHOPPING_CATEGORIES: string[] = [
+  'Produce', 'Dairy & Eggs', 'Meat & Fish', 'Pantry',
+  'Bakery', 'Spices & Herbs', 'Drinks', 'Frozen', 'Other'
+]
+
+export const MAKE_AHEAD_TIMEFRAMES: string[] = [
   '3 days before',
-  'Week before',
-] 
-
-export const DIETARY_TAGS: readonly string[] = [
-  'Vegan',
-  'Vegetarian',
-  'Gluten Free',
-  'Dairy Free',
-  'Keto',
-  'Paleo',
-  'Sugar Free',
-  'Nut Free',
-  'Low Carb',
-  'Whole30',
-] 
+  '2 days before',
+  '1 day before',
+  'Morning of',
+  '1 hour before',
+  'Custom'
+]
