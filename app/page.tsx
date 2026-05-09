@@ -60,7 +60,7 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [filterOpen])
 
-  const collections: Collection[] = Array.from(new Set(recipes.map(r => r.source).filter(Boolean))) as string[]
+  const collections: Collection[] = (Array.from(new Set(recipes.map(r => r.source).filter(Boolean))) as string[])
     .map(source => {
       const sourceRecipes = recipes.filter(r => r.source === source).sort((a,b) => a.title.localeCompare(b.title))
       const sample = sourceRecipes[0]
