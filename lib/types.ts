@@ -98,6 +98,7 @@ export interface FoodForThoughtEntry {
   notes: string | null
   tags: string[]
   created_at: string
+  updated_at: string
 }
 
 export interface IdeaNote {
