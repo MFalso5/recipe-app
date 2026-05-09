@@ -63,3 +63,20 @@ export interface Recipe {
   tags: string[]
   dietary_tags: string[]
 }
+
+export interface MadeItEntry {
+  id: string
+  date: string
+  note: string | null
+  rating: 'would-make-again' | 'make-with-changes' | 'wouldnt-make-again' | null
+}
+
+export interface Cookbook {
+  id: string
+  name: string
+  author: string | null
+  year: number | null
+  cover_url: string | null
+  recipe_count?: number
+  made_count?: number
+}
