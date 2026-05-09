@@ -584,7 +584,6 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
         </button>
       </div>
 
-    </div>
 
     {/* DUPLICATE WARNING MODAL */}
     {duplicateWarning && (
@@ -614,5 +613,7 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
         </div>
       </div>
     )}
+
+    </div>
   )
 }
