@@ -80,7 +80,15 @@ export default function Home() {
     })
     .sort((a, b) => b.recipes.length - a.recipes.length)
 
-  const cookbookCollections = collections.filter(c => c.source_type === 'cookbook')
+  const cookbookCollections = collections.filter(c => c.source_type === 'cookbook' && c.recipes.length >= threshold)
+  const pooledCookbooks = collections.filter(c => c.source_type === 'cookbook' && c.recipes.length < threshold)
+  const otherCookbooks: Collection | null = pooledCookbooks.length > 0 ? {
+    name: 'Other Cookbooks',
+    recipes: pooledCookbooks.flatMap(col => col.recipes).sort((a, b) => a.title.localeCompare(b.title)),
+    source_type: 'cookbook',
+    author: null,
+    cover_url: null
+  } : null
   const websiteCollections = collections.filter(c => c.source_type !== 'cookbook' && c.recipes.length >= threshold)
   const pooledCollections = collections.filter(c => c.source_type !== 'cookbook' && c.recipes.length < threshold)
   const blogsAndSocial: Collection | null = pooledCollections.length > 0 ? {
@@ -443,6 +451,13 @@ export default function Home() {
                           />
                         )
                       })()}
+                    </div>
+                  )}
+
+                  {/* OTHER COOKBOOKS */}
+                  {otherCookbooks && (
+                    <div style={{ marginTop: 20, marginBottom: 20 }}>
+                      <CollectionCard collection={otherCookbooks} onClick={() => { setActiveCollection(otherCookbooks); setSearch('') }} />
                     </div>
                   )}
 
