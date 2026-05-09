@@ -76,6 +76,7 @@ export interface Recipe {
   tags: string[]
   dietary_tags: string[]
   created_at: string
+  share_token: string | null
   updated_at: string
 }
 
