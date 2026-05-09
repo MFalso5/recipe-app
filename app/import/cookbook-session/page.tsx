@@ -259,11 +259,45 @@ function CookbookSessionPageInner() {
     if (!item?.recipe) return
     setQueue(prev => prev.map(i => i.id === id ? { ...i, status: 'saving' } : i))
     try {
-      await fetch('/api/recipes', {
+      // Save main recipe
+      const recipeRes = await fetch('/api/recipes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item.recipe)
       })
+      const recipeData = await recipeRes.json()
+      const savedRecipeId = recipeData.recipe?.id || item.recipe.id
+
+      // Save checked sub-recipes as separate recipes
+      const subRecipes = (item.recipe.sub_recipes || [])
+      const excluded = ((item.recipe as Record<string, unknown>).excluded_sub_recipes as number[] || [])
+      const toSave = subRecipes.filter((_: unknown, i: number) => !excluded.includes(i))
+
+      for (const sr of toSave) {
+        const subRecipe = {
+          ...sr,
+          id: crypto.randomUUID(),
+          source: item.recipe.source,
+          source_url: item.recipe.source_url || null,
+          source_type: 'cookbook',
+          made: false,
+          favorited: false,
+          made_log: [],
+          gallery_urls: [],
+          collections: [],
+          tags: sr.tags || [],
+          dietary_tags: sr.dietary_tags || [],
+          share_token: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        await fetch('/api/recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subRecipe)
+        })
+      }
+
       setQueue(prev => prev.map(i => i.id === id ? { ...i, status: 'saved' } : i))
       setActiveId(null)
     } catch {
@@ -495,7 +529,7 @@ function CookbookSessionPageInner() {
 
                     {/* INLINE REVIEW PANEL */}
                     {activeId === item.id && item.status === 'review' && item.recipe && (
-                      <div style={{ borderTop: '1px solid var(--border)', padding: 16 }}>
+                      <div style={{ borderTop: '1px solid var(--border)', padding: 16 }} onClick={e => e.stopPropagation()}>
                         <RecipeReviewPanel
                           recipe={item.recipe}
                           compact={true}
