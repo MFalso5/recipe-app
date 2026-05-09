@@ -80,3 +80,107 @@ export interface Cookbook {
   recipe_count?: number
   made_count?: number
 }
+
+export interface FoodForThoughtEntry {
+  id: string
+  title: string
+  url: string | null
+  description: string | null
+  notes: string | null
+  tags: string[]
+  created_at: string
+}
+
+export interface IdeaNote {
+  id: string
+  title: string
+  content: string | null
+  tags: string[]
+  created_at: string
+  updated_at: string
+}
+
+export interface MakeAheadEntry {
+  id: string
+  text: string
+  timeframe: string | null
+  done: boolean
+}
+
+export interface MenuRecipeEntry {
+  id: string
+  recipe_id: string
+  recipe?: Recipe
+  course: string
+  notes: string | null
+  sort_order: number
+}
+
+export interface MenuCourse {
+  name: string
+  entries: MenuRecipeEntry[]
+}
+
+export interface Menu {
+  id: string
+  name: string
+  date: string | null
+  notes: string | null
+  overview: string | null
+  courses: MenuCourse[]
+  make_ahead: MakeAheadEntry[]
+  created_at: string
+}
+
+export interface PrepSession {
+  id: string
+  name: string
+  recipe_ids: string[]
+  notes: string | null
+  scheduled_date: string | null
+}
+
+export interface MealPrep {
+  id: string
+  name: string
+  week_start: string | null
+  sessions: PrepSession[]
+  notes: string | null
+  created_at: string
+}
+
+export const DEFAULT_COURSES = [
+  'Cold Bread',
+  'Appetizer',
+  'Hot Appetizer',
+  'Soup',
+  'Salad',
+  'Main',
+  'Side',
+  'Dessert (Cookies)',
+  'Dessert (Pie)',
+  'Dessert (Cake)',
+  'Drinks',
+  'Alcoholic Beverages',
+] as const
+
+export const MAKE_AHEAD_TIMEFRAMES = [
+  'Day of',
+  'Day before',
+  '2 days before',
+  '3 days before',
+  'Week before',
+] as const
+
+export const DIETARY_TAGS = [
+  'Vegan',
+  'Vegetarian',
+  'Gluten Free',
+  'Dairy Free',
+  'Keto',
+  'Paleo',
+  'Sugar Free',
+  'Nut Free',
+  'Low Carb',
+  'Whole30',
+] as const
