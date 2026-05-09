@@ -295,7 +295,7 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
         <div style={{ marginTop: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)' }}>Variations</label>
-            <button onClick={() => set('variations', [...(recipe.variations || []), { title: '', description: null, ingredients: [], steps: [''] }])}
+            <button onClick={() => set('variations', [...(recipe.variations || []), { name: '', description: null, ingredient_changes: null, instruction_changes: null }])}
               style={{ background: 'none', border: '1px dashed var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: 'var(--accent)', cursor: 'pointer', fontFamily: 'inherit' }}>
               + Add variation
             </button>
@@ -303,25 +303,19 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
           {(recipe.variations || []).map((v, vi) => (
             <div key={vi} style={{ background: 'var(--cream)', borderRadius: 10, padding: 14, marginBottom: 10, borderLeft: '3px solid var(--accent)' }}>
               <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input className="input" style={{ flex: 1 }} placeholder="Variation title e.g. Chocolate Version"
-                  value={v.title} onChange={e => { const vs = [...(recipe.variations || [])]; vs[vi] = { ...vs[vi], title: e.target.value }; set('variations', vs) }} />
+                <input className="input" style={{ flex: 1 }} placeholder="Variation name e.g. Orange Version"
+                  value={v.name || ''} onChange={e => { const vs = [...(recipe.variations || [])]; vs[vi] = { ...vs[vi], name: e.target.value }; set('variations', vs) }} />
                 <button onClick={() => set('variations', (recipe.variations || []).filter((_, j) => j !== vi))}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 16 }}>x</button>
               </div>
               <textarea className="input" style={{ minHeight: 48, marginBottom: 8, fontSize: 13 }} placeholder="Brief description (optional)"
                 value={v.description || ''} onChange={e => { const vs = [...(recipe.variations || [])]; vs[vi] = { ...vs[vi], description: e.target.value || null }; set('variations', vs) }} />
-              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 6 }}>Steps</div>
-              {(v.steps || []).map((step, si) => (
-                <div key={si} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-                  <span style={{ color: 'var(--accent)', fontSize: 13, fontWeight: 600, paddingTop: 8, flexShrink: 0 }}>{si + 1}</span>
-                  <textarea className="input" style={{ minHeight: 44, fontSize: 13 }} value={step}
-                    onChange={e => { const vs = [...(recipe.variations || [])]; vs[vi].steps[si] = e.target.value; set('variations', vs) }} />
-                  <button onClick={() => { const vs = [...(recipe.variations || [])]; vs[vi].steps = vs[vi].steps.filter((_, j) => j !== si); set('variations', vs) }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 14, paddingTop: 8 }}>x</button>
-                </div>
-              ))}
-              <button onClick={() => { const vs = [...(recipe.variations || [])]; vs[vi].steps = [...vs[vi].steps, '']; set('variations', vs) }}
-                style={{ background: 'none', border: '1px dashed var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'inherit' }}>+ Add step</button>
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 6 }}>Ingredient Changes</div>
+              <textarea className="input" style={{ minHeight: 48, marginBottom: 8, fontSize: 13 }} placeholder="e.g. Add zest of 2 oranges. Increase cream to 267 g."
+                value={v.ingredient_changes || ''} onChange={e => { const vs = [...(recipe.variations || [])]; vs[vi] = { ...vs[vi], ingredient_changes: e.target.value || null }; set('variations', vs) }} />
+              <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: .8, marginBottom: 6 }}>Instruction Changes</div>
+              <textarea className="input" style={{ minHeight: 48, fontSize: 13 }} placeholder="e.g. After straining, whisk in orange zest before adding butter."
+                value={v.instruction_changes || ''} onChange={e => { const vs = [...(recipe.variations || [])]; vs[vi] = { ...vs[vi], instruction_changes: e.target.value || null }; set('variations', vs) }} />
             </div>
           ))}
         </div>
