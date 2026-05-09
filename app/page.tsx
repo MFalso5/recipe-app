@@ -79,7 +79,7 @@ export default function Home() {
   const ketoRecipes = recipes.filter(r => (r.dietary_tags || []).includes('Keto') || (r.tags || []).includes('Keto'))
 
   const allTags = Array.from(new Set(recipes.flatMap(r => (r.tags || []).filter(t => !DIETARY_TAGS.includes(t))))).sort()
-  const allSources = Array.from(new Set(recipes.map(r => r.source).filter(Boolean))) as string[].sort()
+  const allSources = Array.from(new Set(recipes.map(r => r.source).filter(Boolean) as string[])).sort()
   const activeFilterCount = filters.dietary.length + filters.sources.length + filters.tags.length + filters.ingredients.length + (filters.made !== 'all' ? 1 : 0)
 
   const toggleFilter = (type: 'dietary' | 'sources' | 'tags', val: string) => {
