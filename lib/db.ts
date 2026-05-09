@@ -225,3 +225,11 @@ export async function dbSaveCookbook(cookbook: unknown) {
   await sql`INSERT INTO cookbooks (id, data, updated_at) VALUES (${c.id}, ${JSON.stringify(cookbook)}, NOW()) ON CONFLICT (id) DO UPDATE SET data = ${JSON.stringify(cookbook)}, updated_at = NOW()`
   return cookbook
 }
+
+// ── DUPLICATE CHECK ──
+export async function dbFindDuplicate(title: string, source: string): Promise<import('./types').Recipe | null> {
+  await initDb()
+  const rows = await sql\`SELECT data FROM recipes WHERE data->>'title' = ${title} AND data->>'source' = ${source} LIMIT 1\`
+  if (!rows[0]?.data) return null
+  return migrateRecipe(rows[0].data)
+}

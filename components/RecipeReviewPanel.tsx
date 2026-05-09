@@ -56,10 +56,31 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
   const [customTag, setCustomTag] = React.useState('')
   const [draggingFrom, setDraggingFrom] = React.useState<{gi: number, ii: number} | null>(null)
   const [dragOver, setDragOver] = React.useState<{gi: number, ii: number, pos: 'before' | 'after'} | null>(null)
+  const [duplicateWarning, setDuplicateWarning] = React.useState<{ title: string, source: string, id: string } | null>(null)
+  const [checkingDuplicate, setCheckingDuplicate] = React.useState(false)
   const imgRef = React.useRef<HTMLInputElement>(null)
   const galleryRef = React.useRef<HTMLInputElement>(null)
 
   const set = (key: string, val: unknown) => onChange({ ...recipe, [key]: val })
+
+  const handleSave = async () => {
+    const title = recipe.title?.trim()
+    const source = recipe.source?.trim()
+    if (title && source) {
+      setCheckingDuplicate(true)
+      try {
+        const res = await fetch('/api/recipes/check-duplicate?title=' + encodeURIComponent(title) + '&source=' + encodeURIComponent(source))
+        const data = await res.json()
+        if (data.duplicate) {
+          setDuplicateWarning({ title, source, id: data.duplicate.id })
+          setCheckingDuplicate(false)
+          return
+        }
+      } catch { /* if check fails, proceed with save */ }
+      setCheckingDuplicate(false)
+    }
+    onSave()
+  }
 
   const handleIngredientDrop = (targetGi: number, targetIi: number) => {
     if (!draggingFrom) return
@@ -558,11 +579,40 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
       {/* SAVE BUTTON */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
         {onCancel && <button onClick={onCancel} className="btn btn-ghost">Cancel</button>}
-        <button onClick={onSave} className="btn btn-green" disabled={saving}>
-          {saving ? '⟳ Saving...' : '✓ Save to Library'}
+        <button onClick={handleSave} className="btn btn-green" disabled={saving || checkingDuplicate}>
+          {saving ? '⟳ Saving...' : checkingDuplicate ? '⟳ Checking...' : '✓ Save to Library'}
         </button>
       </div>
 
     </div>
+
+    {/* DUPLICATE WARNING MODAL */}
+    {duplicateWarning && (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        onClick={() => setDuplicateWarning(null)}>
+        <div style={{ background: 'var(--card)', borderRadius: 16, padding: 24, maxWidth: 420, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,.2)' }}
+          onClick={e => e.stopPropagation()}>
+          <div style={{ fontSize: 24, marginBottom: 12 }}>⚠️</div>
+          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Duplicate Recipe</div>
+          <p style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 20, lineHeight: 1.6 }}>
+            A recipe called <strong style={{ color: 'var(--ink)' }}>{duplicateWarning.title}</strong> from <strong style={{ color: 'var(--ink)' }}>{duplicateWarning.source}</strong> already exists in your library.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button onClick={() => { setDuplicateWarning(null); onSave() }}
+              style={{ padding: '10px 16px', borderRadius: 10, background: 'var(--accent)', color: '#fff', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 500 }}>
+              Save anyway
+            </button>
+            <a href={'/recipe/' + duplicateWarning.id} target="_blank" rel="noreferrer"
+              style={{ padding: '10px 16px', borderRadius: 10, background: 'var(--tag)', color: 'var(--ink)', border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, fontWeight: 500, textAlign: 'center', textDecoration: 'none', display: 'block' }}>
+              View existing recipe →
+            </a>
+            <button onClick={() => setDuplicateWarning(null)}
+              style={{ padding: '10px 16px', borderRadius: 10, background: 'none', color: 'var(--muted)', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 14 }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   )
 }
