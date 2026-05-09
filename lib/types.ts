@@ -80,6 +80,17 @@ export interface Recipe {
   updated_at: string
 }
 
+export interface Collection {
+  name: string | null
+  recipes: Recipe[]
+  source_type: 'website' | 'cookbook' | 'other'
+  author?: string | null
+  cover_url?: string | null
+  pub_year?: string | null
+  recipe_count?: number
+  made_count?: number
+}
+
 export interface Cookbook {
   id: string
   name: string
