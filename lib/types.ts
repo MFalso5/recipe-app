@@ -157,6 +157,7 @@ export interface MealPrep {
   id: string
   name: string
   week_start: string | null
+  date: string | null
   sessions: PrepSession[]
   notes: string | null
   created_at: string
