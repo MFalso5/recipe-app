@@ -1,8 +1,8 @@
 'use client'
 import * as React from 'react'
-import { Recipe, Ingredient, Step } from '@/lib/types'
+import { Recipe, Ingredient, Step, Variation } from '@/lib/types'
 
-const TIER1 = ['Pie','Cake','Cookies','Bread','Pasta','Soup','Salad','Appetizer','Side','Main','Sauce','Drink','Breakfast','Snack']
+const TIER1 = ['Pie','Cake','Cookies','Bread','Pasta','Soup','Salad','Appetizer','Side','Main','Sauce','Drink','Breakfast','Snack','Dessert']
 const TIER2 = ['Sweet','Savory']
 const TIER3 = ['Italian','French','American','Greek','Asian','Mexican','Spanish','Middle Eastern','Indian','Japanese','Chinese','Thai','Mediterranean','Holiday','Weekend','Quick','Comfort Food','Seasonal','Summer','Winter','Spring','Fall']
 const DIETARY = ['Vegan','Vegetarian','Gluten Free','Dairy Free','Keto','Paleo','Sugar Free','Nut Free','Low Carb','Whole30']
@@ -61,36 +61,24 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
 
   const set = (key: string, val: unknown) => onChange({ ...recipe, [key]: val })
 
-  // Move ingredient from one position to another, across groups
   const handleIngredientDrop = (targetGi: number, targetIi: number) => {
     if (!draggingFrom) return
     const { gi: fromGi, ii: fromIi } = draggingFrom
     const pos = dragOver?.pos || 'after'
-
-    // No-op if dropping on itself
     if (fromGi === targetGi && fromIi === targetIi) {
       setDraggingFrom(null); setDragOver(null); return
     }
-
-    // Deep copy groups
     const gs = (recipe.ingredient_groups || []).map(g => ({ ...g, ingredients: [...g.ingredients] }))
-
-    // Remove from source
     const [moved] = gs[fromGi].ingredients.splice(fromIi, 1)
-
-    // Adjust target index if same group and source was before target
     let insertIi = targetIi
     if (fromGi === targetGi && fromIi < targetIi) insertIi = targetIi - 1
-
     const insertAt = pos === 'after' ? insertIi + 1 : insertIi
     gs[targetGi].ingredients.splice(insertAt, 0, moved)
-
     set('ingredient_groups', gs)
     setDraggingFrom(null)
     setDragOver(null)
   }
 
-  // All images available for hero selection
   const allImages = [
     recipe.image_url,
     ...(recipe.gallery_urls || []),
@@ -143,6 +131,24 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
 
   const sectionGap = compact ? 14 : 18
   const dataSource = (recipe as Record<string, unknown>).data_source as string | undefined
+  const variations = (recipe as Record<string, unknown>).variations as Variation[] | null | undefined
+
+  const updateVariation = (vi: number, updated: Partial<Variation>) => {
+    const vs = [...(variations || [])]
+    vs[vi] = { ...vs[vi], ...updated }
+    set('variations', vs)
+  }
+
+  const removeVariation = (vi: number) => {
+    const vs = (variations || []).filter((_, j) => j !== vi)
+    set('variations', vs.length ? vs : null)
+  }
+
+  const addVariation = () => {
+    const vs = [...(variations || [])]
+    vs.push({ name: '', description: null, ingredient_changes: null, instruction_changes: null })
+    set('variations', vs)
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: sectionGap }}>
@@ -332,7 +338,6 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
                 onDrop={e => { e.preventDefault(); e.stopPropagation(); handleIngredientDrop(gi, ii) }}
                 style={{ position: 'relative' }}>
 
-                {/* Drop indicator — before */}
                 {dragOver?.gi === gi && dragOver?.ii === ii && dragOver?.pos === 'before' && (
                   <div style={{ height: 2, background: 'var(--accent)', borderRadius: 2, marginBottom: 3 }} />
                 )}
@@ -350,7 +355,6 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
                     transition: 'opacity .15s'
                   }}>
 
-                  {/* Drag handle */}
                   <div style={{ cursor: 'grab', color: 'var(--muted)', fontSize: 15, display: 'flex', alignItems: 'center', flexShrink: 0, opacity: 0.4, userSelect: 'none', paddingRight: 1 }}>⠿</div>
 
                   <input className="input" style={{ width: 70, flexShrink: 0, fontSize: 13, borderColor: ing.qty === '?' ? 'var(--red)' : (ing as unknown as Record<string,unknown>).needs_review ? '#F59E0B' : undefined }}
@@ -368,14 +372,12 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
                   }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 15, flexShrink: 0 }}>✕</button>
                 </div>
 
-                {/* Drop indicator — after */}
                 {dragOver?.gi === gi && dragOver?.ii === ii && dragOver?.pos === 'after' && (
                   <div style={{ height: 2, background: 'var(--accent)', borderRadius: 2, marginBottom: 3 }} />
                 )}
               </div>
             ))}
 
-            {/* Drop zone at end of group */}
             {draggingFrom && (
               <div
                 onDragOver={e => { e.preventDefault(); setDragOver({ gi, ii: g.ingredients.length - 1, pos: 'after' }) }}
@@ -437,14 +439,58 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
         ))}
       </div>
 
-      {/* NOTES + STORAGE */}
+      {/* NOTES */}
       <div>
         <label style={labelStyle}>Notes <span style={{ fontWeight: 400, textTransform: 'none' }}>(one per line)</span></label>
         <textarea className="input" style={{ minHeight: 52 }} value={((recipe as Record<string,unknown>).notes as string[] || []).join('\n')} onChange={e => set('notes', e.target.value ? e.target.value.split('\n') : null)} />
       </div>
+
+      {/* STORAGE */}
       <div>
         <label style={labelStyle}>Storage</label>
         <textarea className="input" style={{ minHeight: 48 }} value={(recipe as Record<string,unknown>).storage as string || ''} onChange={e => set('storage', e.target.value || null)} />
+      </div>
+
+      {/* VARIATIONS */}
+      <div>
+        <label style={labelStyle}>Variations</label>
+        {(variations || []).map((v, vi) => (
+          <div key={vi} style={{ marginBottom: 10, padding: 12, background: 'var(--cream)', borderRadius: 8, border: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
+              <input className="input" style={{ fontWeight: 600, fontSize: 13, flex: 1 }}
+                placeholder="Variation name (e.g. Orange Version)"
+                value={v.name || ''}
+                onChange={e => updateVariation(vi, { name: e.target.value })} />
+              <button onClick={() => removeVariation(vi)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 15, flexShrink: 0 }}>✕</button>
+            </div>
+            <div style={{ marginBottom: 6 }}>
+              <label style={{ ...labelStyle, fontSize: 9, marginBottom: 3 }}>Description</label>
+              <textarea className="input" style={{ minHeight: 38, fontSize: 12 }}
+                placeholder="Brief description of what this variation produces..."
+                value={v.description || ''}
+                onChange={e => updateVariation(vi, { description: e.target.value || null })} />
+            </div>
+            <div style={{ marginBottom: 6 }}>
+              <label style={{ ...labelStyle, fontSize: 9, marginBottom: 3 }}>Ingredient Changes</label>
+              <textarea className="input" style={{ minHeight: 38, fontSize: 12 }}
+                placeholder="e.g. Add zest of 2 medium oranges. Increase heavy cream to 267 g / 1 C plus 2 T."
+                value={v.ingredient_changes || ''}
+                onChange={e => updateVariation(vi, { ingredient_changes: e.target.value || null })} />
+            </div>
+            <div>
+              <label style={{ ...labelStyle, fontSize: 9, marginBottom: 3 }}>Instruction Changes</label>
+              <textarea className="input" style={{ minHeight: 38, fontSize: 12 }}
+                placeholder="e.g. After straining, whisk in orange zest before adding butter."
+                value={v.instruction_changes || ''}
+                onChange={e => updateVariation(vi, { instruction_changes: e.target.value || null })} />
+            </div>
+          </div>
+        ))}
+        <button onClick={addVariation}
+          style={{ background: 'none', border: '1px dashed var(--border)', borderRadius: 6, padding: '4px 10px', fontSize: 11, color: 'var(--muted)', cursor: 'pointer', fontFamily: 'inherit' }}>
+          + Add variation
+        </button>
       </div>
 
       {/* GALLERY */}
@@ -469,48 +515,49 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
         </div>
       </div>
 
+      {/* SUB-RECIPES */}
+      {((recipe as Record<string,unknown>).sub_recipes as unknown[])?.length > 0 && (
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 10 }}>
+            Linked Recipes Detected
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
+            These recipes were found inside this recipe. Check the ones you want to save as separate recipes.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {((recipe as Record<string,unknown>).sub_recipes as Record<string,unknown>[]).map((sr, i) => {
+              const selected = !((recipe as Record<string,unknown>).excluded_sub_recipes as number[] || []).includes(i)
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: selected ? 'var(--accent-bg)' : 'var(--tag)', border: '1px solid ' + (selected ? 'var(--accent)' : 'var(--border)'), borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }}
+                  onClick={() => {
+                    const excluded = [...((recipe as Record<string,unknown>).excluded_sub_recipes as number[] || [])]
+                    const idx = excluded.indexOf(i)
+                    if (idx >= 0) excluded.splice(idx, 1)
+                    else excluded.push(i)
+                    set('excluded_sub_recipes', excluded)
+                  }}>
+                  <div style={{ width: 18, height: 18, borderRadius: 4, border: '2px solid ' + (selected ? 'var(--accent)' : 'var(--border)'), background: selected ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+                    {selected && <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>v</span>}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: selected ? 'var(--accent)' : 'var(--ink)' }}>{String(sr.title || 'Untitled')}</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+                      {((sr.ingredient_groups as Record<string,unknown>[])?.[0]?.ingredients as unknown[])?.length || 0} ingredients
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
+            Selected recipes will be saved separately and linked in the ingredients list.
+          </p>
+        </div>
+      )}
+
       {/* SAVE BUTTON */}
       <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
         {onCancel && <button onClick={onCancel} className="btn btn-ghost">Cancel</button>}
-        {/* SUB-RECIPES */}
-        {((recipe as Record<string,unknown>).sub_recipes as unknown[])?.length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase' as const, color: 'var(--muted)', marginBottom: 10 }}>
-              Linked Recipes Detected
-            </div>
-            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
-              These recipes were found inside this recipe. Check the ones you want to save as separate recipes.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {((recipe as Record<string,unknown>).sub_recipes as Record<string,unknown>[]).map((sr, i) => {
-                const selected = !((recipe as Record<string,unknown>).excluded_sub_recipes as number[] || []).includes(i)
-                return (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, background: selected ? 'var(--accent-bg)' : 'var(--tag)', border: '1px solid ' + (selected ? 'var(--accent)' : 'var(--border)'), borderRadius: 10, padding: '10px 12px', cursor: 'pointer' }}
-                    onClick={() => {
-                      const excluded = [...((recipe as Record<string,unknown>).excluded_sub_recipes as number[] || [])]
-                      const idx = excluded.indexOf(i)
-                      if (idx >= 0) excluded.splice(idx, 1)
-                      else excluded.push(i)
-                      set('excluded_sub_recipes', excluded)
-                    }}>
-                    <div style={{ width: 18, height: 18, borderRadius: 4, border: '2px solid ' + (selected ? 'var(--accent)' : 'var(--border)'), background: selected ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                      {selected && <span style={{ color: '#fff', fontSize: 11, fontWeight: 700 }}>v</span>}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: selected ? 'var(--accent)' : 'var(--ink)' }}>{String(sr.title || 'Untitled')}</div>
-                      <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
-                        {((sr.ingredient_groups as Record<string,unknown>[])?.[0]?.ingredients as unknown[])?.length || 0} ingredients
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-            <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>
-              Selected recipes will be saved separately and linked in the ingredients list.
-            </p>
-          </div>
-        )}
         <button onClick={onSave} className="btn btn-green" disabled={saving}>
           {saving ? '⟳ Saving...' : '✓ Save to Library'}
         </button>
