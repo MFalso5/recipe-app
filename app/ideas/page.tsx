@@ -17,7 +17,7 @@ export default function IdeasPage() {
       // Ensure scratchpad exists
       const scratchpad = all.find((i: IdeaNote) => i.is_scratchpad)
       if (!scratchpad) {
-        const pad: IdeaNote = { id: crypto.randomUUID(), title: 'Quick Capture', content: '', is_scratchpad: true, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+        const pad: IdeaNote = { id: crypto.randomUUID(), title: 'Quick Capture', content: '', is_scratchpad: true, tags: [], created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
         fetch('/api/research', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pad) })
         setIdeas([pad, ...all])
         setActiveId(pad.id)
