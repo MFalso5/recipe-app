@@ -112,7 +112,7 @@ export default function Home() {
       (r.tags || []).some(t => t.toLowerCase().includes(q)) ||
       r.ingredient_groups?.some(g => g.ingredients.some(i => i.name.toLowerCase().includes(q)))
     const matchDietary = filters.dietary.length === 0 || filters.dietary.every(d => (r.dietary_tags || r.tags || []).includes(d))
-    const matchSource = filters.sources.length === 0 || filters.sources.includes(r.source)
+    const matchSource = filters.sources.length === 0 || (r.source !== null && filters.sources.includes(r.source))
     const matchTags = filters.tags.length === 0 || filters.tags.some(t => (r.tags || []).includes(t))
     const matchMade = filters.made === 'all' || (filters.made === 'made' ? r.made : !r.made)
     const matchIngredients = filters.ingredients.length === 0 || filters.ingredients.every(fi => r.ingredient_groups?.some(g => g.ingredients.some(i => i.name.toLowerCase().includes(fi.toLowerCase()))))

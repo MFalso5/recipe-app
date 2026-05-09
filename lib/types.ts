@@ -74,22 +74,15 @@ export interface Recipe {
   gallery_urls: string[] | null
   page_number: string | null
   share_token: string | null
+  cookbook_author: string | null
+  cookbook_cover_url: string | null
   tags: string[]
   dietary_tags: string[]
   created_at: string
   updated_at: string
 }
 
-export interface Collection {
-  name: string
-  recipes: Recipe[]
-  source_type: 'website' | 'cookbook' | 'other'
-  author?: string | null
-  cover_url?: string | null
-  pub_year?: string | null
-  recipe_count?: number
-  made_count?: number
-}
+
 
 export interface Cookbook {
   id: string
@@ -177,7 +170,7 @@ export interface MealPrep {
   updated_at: string
 }
 
-export const DEFAULT_COURSES = [
+export const DEFAULT_COURSES: readonly string[] = [
   'Cold Bread',
   'Appetizer',
   'Hot Appetizer',
@@ -190,17 +183,17 @@ export const DEFAULT_COURSES = [
   'Dessert (Cake)',
   'Drinks',
   'Alcoholic Beverages',
-] as const
+] 
 
-export const MAKE_AHEAD_TIMEFRAMES = [
+export const MAKE_AHEAD_TIMEFRAMES: readonly string[] = [
   'Day of',
   'Day before',
   '2 days before',
   '3 days before',
   'Week before',
-] as const
+] 
 
-export const DIETARY_TAGS = [
+export const DIETARY_TAGS: readonly string[] = [
   'Vegan',
   'Vegetarian',
   'Gluten Free',
@@ -211,4 +204,4 @@ export const DIETARY_TAGS = [
   'Nut Free',
   'Low Carb',
   'Whole30',
-] as const
+] 
