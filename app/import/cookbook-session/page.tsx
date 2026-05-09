@@ -59,6 +59,18 @@ function CookbookSessionPageInner() {
     }
   }, [title, existingCookbooks])
 
+  // Auto-fill author/year when title matches an existing cookbook
+  React.useEffect(() => {
+    const match = existingCookbooks.find(cb => cb.name.toLowerCase() === title.trim().toLowerCase())
+    if (match) {
+      setMatchedCookbook(match)
+      if (!author) setAuthor(match.author || '')
+      if (!pubYear) setPubYear(match.pub_year || '')
+    } else {
+      setMatchedCookbook(null)
+    }
+  }, [title, existingCookbooks])
+
   useEffect(() => {
     const draftId = searchParams.get('draft')
     if (!draftId) return
