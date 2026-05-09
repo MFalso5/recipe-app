@@ -74,7 +74,7 @@ export default function FoodForThoughtPage() {
   }
 
   const editEntry = (entry: FoodForThoughtEntry) => {
-    setUrl(entry.url); setTitle(entry.title)
+    setUrl(entry.url || ""); setTitle(entry.title)
     setDescription(entry.description || ''); setNotes(entry.notes || '')
     setTags((entry.tags || []).join(', '))
     setEditingId(entry.id); setShowForm(true)
