@@ -285,8 +285,8 @@ function CookbookSessionPageInner() {
           made_log: [],
           gallery_urls: [],
           collections: [],
-          tags: (sr as Record<string,unknown>).tags as string[] || [],
-          dietary_tags: (sr as Record<string,unknown>).dietary_tags as string[] || [],
+          tags: (sr as unknown as Record<string,unknown>).tags as string[] || [],
+          dietary_tags: (sr as unknown as Record<string,unknown>).dietary_tags as string[] || [],
           share_token: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
