@@ -85,9 +85,12 @@ export interface Cookbook {
   name: string
   author: string | null
   year: number | null
+  pub_year: string | null
   cover_url: string | null
   recipe_count?: number
   made_count?: number
+  created_at: string
+  updated_at: string
 }
 
 export interface FoodForThoughtEntry {
