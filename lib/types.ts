@@ -115,9 +115,11 @@ export interface IdeaNote {
 
 export interface MakeAheadEntry {
   id: string
-  text: string
+  task: string
   timeframe: string | null
-  done: boolean
+  recipe_id: string | null
+  recipe_title: string | null
+  confirmed: boolean
 }
 
 export interface MenuRecipeEntry {
