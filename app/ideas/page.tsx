@@ -190,13 +190,13 @@ export default function IdeasPage() {
                   ? 'Capture recipe ideas, things to look up, recipes you want to create...\n\nExamples:\n• Find a good sourdough focaccia recipe\n• Try making homemade pasta\n• Look for a Sicilian caponata\n• ATK has a brown butter chocolate chip cookie — find it'
                   : 'Start typing your ideas...'
                 }
-                value={active.content}
+                value={active.content || ""}
                 onChange={e => updateIdea(active.id, { content: e.target.value })}
               />
 
               {/* FOOTER */}
               <div style={{ padding: '10px 20px', borderTop: '1px solid var(--border)', background: 'var(--cream)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>{active.content.length} characters · auto-saves</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>{(active.content || "").length} characters · auto-saves</span>
                 <button onClick={() => window.print()} className="btn btn-ghost btn-sm">🖨 Print</button>
               </div>
             </div>
