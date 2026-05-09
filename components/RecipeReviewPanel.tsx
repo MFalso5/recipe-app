@@ -58,6 +58,9 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
   const [dragOver, setDragOver] = React.useState<{gi: number, ii: number, pos: 'before' | 'after'} | null>(null)
   const [duplicateWarning, setDuplicateWarning] = React.useState<{ title: string, source: string, id: string } | null>(null)
   const [checkingDuplicate, setCheckingDuplicate] = React.useState(false)
+  const [sourceSuggestions, setSourceSuggestions] = React.useState<string[]>([])
+  const [showSourceSuggestions, setShowSourceSuggestions] = React.useState(false)
+  const [loadingSources, setLoadingSources] = React.useState(false)
   const imgRef = React.useRef<HTMLInputElement>(null)
   const galleryRef = React.useRef<HTMLInputElement>(null)
 
@@ -154,6 +157,19 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
   const dataSource = (recipe as Record<string, unknown>).data_source as string | undefined
   const variations = (recipe as Record<string, unknown>).variations as Variation[] | null | undefined
 
+  const fetchSources = async () => {
+    if (sourceSuggestions.length > 0) { setShowSourceSuggestions(true); return }
+    setLoadingSources(true)
+    try {
+      const res = await fetch('/api/recipes')
+      const data = await res.json()
+      const sources = Array.from(new Set((data.recipes || []).map((r: {source: string}) => r.source).filter(Boolean))) as string[]
+      setSourceSuggestions(sources.sort())
+    } catch { /* ignore */ }
+    setLoadingSources(false)
+    setShowSourceSuggestions(true)
+  }
+
   const updateVariation = (vi: number, updated: Partial<Variation>) => {
     const vs = [...(variations || [])]
     vs[vi] = { ...vs[vi], ...updated }
@@ -233,10 +249,29 @@ export default function RecipeReviewPanel({ recipe, pageImages = [], onChange, o
           <label style={labelStyle}>Title</label>
           <input className="input" value={recipe.title || ''} onChange={e => set('title', e.target.value)} />
         </div>
-        <div>
+        <div style={{ position: 'relative' }}>
           <label style={{ ...labelStyle, color: 'var(--muted)' }}>Source (optional)</label>
-          <input className="input" value={recipe.source || ''} onChange={e => set('source', e.target.value)}
-            placeholder="e.g. Sip and Feast (leave blank for General Recipes)" />
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input className="input" value={recipe.source || ''} onChange={e => set('source', e.target.value)}
+              placeholder="e.g. Sip and Feast"
+              onFocus={() => setShowSourceSuggestions(false)} />
+            <button type="button" onClick={fetchSources} title="Assign to existing collection"
+              style={{ flexShrink: 0, padding: '0 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--cream)', cursor: 'pointer', fontSize: 13, color: 'var(--muted)', whiteSpace: 'nowrap' }}>
+              {loadingSources ? '⟳' : '📚'}
+            </button>
+          </div>
+          {showSourceSuggestions && sourceSuggestions.length > 0 && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, right: 40, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10, zIndex: 50, maxHeight: 200, overflowY: 'auto', boxShadow: '0 8px 24px rgba(0,0,0,.12)', marginTop: 4 }}>
+              {sourceSuggestions.filter(s => !recipe.source || s.toLowerCase().includes((recipe.source || '').toLowerCase())).map(s => (
+                <div key={s} onClick={() => { set('source', s); setShowSourceSuggestions(false) }}
+                  style={{ padding: '8px 12px', fontSize: 13, cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'var(--cream)'}
+                  onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
+                  {s}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <label style={labelStyle}>Source Type</label>

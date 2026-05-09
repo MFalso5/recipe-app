@@ -37,7 +37,13 @@ export default function Home() {
   })
   const [ingredientSearch, setIngredientSearch] = useState('')
   const [activeCollection, setActiveCollection] = useState<Collection | null>(null)
+  const [threshold, setThreshold] = useState(3)
   const filterRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('collection_threshold')
+    if (saved) setThreshold(parseInt(saved) || 3)
+  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -75,7 +81,15 @@ export default function Home() {
     .sort((a, b) => b.recipes.length - a.recipes.length)
 
   const cookbookCollections = collections.filter(c => c.source_type === 'cookbook')
-  const websiteCollections = collections.filter(c => c.source_type !== 'cookbook')
+  const websiteCollections = collections.filter(c => c.source_type !== 'cookbook' && c.recipes.length >= threshold)
+  const pooledCollections = collections.filter(c => c.source_type !== 'cookbook' && c.recipes.length < threshold)
+  const blogsAndSocial: Collection | null = pooledCollections.length > 0 ? {
+    name: 'Blogs & Social',
+    recipes: pooledCollections.flatMap(col => col.recipes).sort((a, b) => a.title.localeCompare(b.title)),
+    source_type: 'other',
+    author: null,
+    cover_url: null
+  } : null
   const ketoRecipes = recipes.filter(r => (r.dietary_tags || []).includes('Keto') || (r.tags || []).includes('Keto'))
 
   const allTags = Array.from(new Set(recipes.flatMap(r => (r.tags || []).filter(t => !DIETARY_TAGS.includes(t))))).sort()
@@ -442,6 +456,17 @@ export default function Home() {
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 20 }}>
                         {websiteCollections.map(col => <CollectionCard key={col.name} collection={col} onClick={() => { setActiveCollection(col); setSearch('') }} />)}
                       </div>
+                    </div>
+                  )}
+
+                  {/* BLOGS & SOCIAL */}
+                  {blogsAndSocial && (
+                    <div style={{ marginTop: websiteCollections.length > 0 ? 28 : 0, marginBottom: 36 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16 }}>
+                        <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 700 }}>📱 Blogs &amp; Social</h2>
+                        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{pooledCollections.length} sources · {blogsAndSocial.recipes.length} recipes</span>
+                      </div>
+                      <CollectionCard collection={blogsAndSocial} onClick={() => { setActiveCollection(blogsAndSocial); setSearch('') }} />
                     </div>
                   )}
 

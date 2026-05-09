@@ -13,11 +13,14 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [collectionThreshold, setCollectionThreshold] = useState(3)
 
   useEffect(() => {
     fetch('/api/auth/credentials').then(r => r.json()).then(d => {
       if (d.username) setCurrentUsername(d.username)
     })
+    const saved = localStorage.getItem('collection_threshold')
+    if (saved) setCollectionThreshold(parseInt(saved) || 3)
   }, [])
 
   const handleSave = async (e: React.FormEvent) => {
@@ -81,6 +84,36 @@ export default function SettingsPage() {
             <button onClick={handleSignOut} style={{ background: 'var(--tag)', border: '1px solid var(--border)', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)' }}>
               Sign out
             </button>
+          </div>
+        </div>
+
+        {/* LIBRARY SETTINGS */}
+        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 16, padding: '24px', marginBottom: 20 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>Library Settings</h2>
+          <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 20, lineHeight: 1.6 }}>
+            Control how your Collections view is organized.
+          </p>
+          <div>
+            <label style={labelStyle}>Collection Threshold</label>
+            <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 12, lineHeight: 1.6 }}>
+              Sources with fewer than <strong>{collectionThreshold}</strong> recipe{collectionThreshold !== 1 ? 's' : ''} are grouped into &ldquo;Blogs &amp; Social&rdquo; instead of getting their own collection.
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[1, 2, 3, 5, 10].map(n => (
+                <button key={n} onClick={() => {
+                  setCollectionThreshold(n)
+                  localStorage.setItem('collection_threshold', String(n))
+                }} style={{
+                  width: 44, height: 44, borderRadius: 10, border: '1.5px solid ' + (collectionThreshold === n ? 'var(--accent)' : 'var(--border)'),
+                  background: collectionThreshold === n ? 'var(--accent-bg)' : 'var(--cream)',
+                  color: collectionThreshold === n ? 'var(--accent)' : 'var(--muted)',
+                  fontFamily: 'inherit', fontSize: 14, fontWeight: 600, cursor: 'pointer'
+                }}>{n}</button>
+              ))}
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8, opacity: .7 }}>
+              Default is 3. Change takes effect immediately in the Collections view.
+            </p>
           </div>
         </div>
 
