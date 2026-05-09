@@ -23,11 +23,13 @@ export interface Step {
 
 export interface IngredientGroup {
   name: string | null
+  group_name?: string | null
   ingredients: Ingredient[]
 }
 
 export interface StepGroup {
   name: string | null
+  group_name?: string | null
   steps: Step[]
 }
 
