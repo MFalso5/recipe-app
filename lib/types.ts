@@ -73,10 +73,10 @@ export interface Recipe {
   made_log: MadeItEntry[] | null
   gallery_urls: string[] | null
   page_number: string | null
+  share_token: string | null
   tags: string[]
   dietary_tags: string[]
   created_at: string
-  share_token: string | null
   updated_at: string
 }
 
@@ -84,7 +84,6 @@ export interface Cookbook {
   id: string
   name: string
   author: string | null
-  year: number | null
   pub_year: string | null
   cover_url: string | null
   recipe_count?: number
@@ -105,12 +104,11 @@ export interface FoodForThoughtEntry {
 }
 
 export interface IdeaNote {
-  is_scratchpad?: boolean
   id: string
   title: string
   content: string | null
   is_scratchpad?: boolean
-  tags: string[]
+  tags?: string[]
   created_at: string
   updated_at: string
 }
@@ -124,16 +122,16 @@ export interface MakeAheadEntry {
 
 export interface MenuRecipeEntry {
   id: string
-  recipe_id: string
-  recipe?: Recipe
-  course: string
-  notes: string | null
-  sort_order: number
+  recipe_id: string | null
+  recipe_title: string
+  note: string | null
+  is_free_text: boolean
 }
 
 export interface MenuCourse {
+  id: string
   name: string
-  entries: MenuRecipeEntry[]
+  recipes: MenuRecipeEntry[]
 }
 
 export interface Menu {
@@ -145,14 +143,14 @@ export interface Menu {
   courses: MenuCourse[]
   make_ahead: MakeAheadEntry[]
   created_at: string
+  updated_at: string
 }
 
 export interface PrepSession {
   id: string
   name: string
-  recipe_ids: string[]
+  recipes: MenuRecipeEntry[]
   notes: string | null
-  scheduled_date: string | null
 }
 
 export interface MealPrep {
@@ -162,6 +160,7 @@ export interface MealPrep {
   sessions: PrepSession[]
   notes: string | null
   created_at: string
+  updated_at: string
 }
 
 export const DEFAULT_COURSES = [
