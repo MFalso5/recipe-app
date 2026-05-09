@@ -147,13 +147,13 @@ export default function RecipeCard({ recipe: r, onToggleMade, onUpdateLog, onUpd
           {/* TAGS — Tier 1 + Tier 2 prominent, dietary smaller */}
           {((r.tags || []).length > 0 || (r.dietary_tags || []).length > 0) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 8, alignItems: 'center' }}>
-              {(r.tags || []).filter(t => ['Pie','Cake','Cookies','Bread','Pasta','Soup','Salad','Appetizer','Side','Main','Sauce','Drink','Breakfast','Snack'].includes(t)).map(t => (
+              {(r.tags || []).filter(t => ['Pie','Cake','Cookies','Bread','Pasta','Soup','Salad','Appetizer','Side','Main','Sauce','Drink','Breakfast','Snack','Dessert'].includes(t)).map(t => (
                 <span key={t} style={{ background: 'var(--accent-bg)', color: 'var(--accent)', borderRadius: 50, padding: '2px 10px', fontSize: 12, fontWeight: 600 }}>{t}</span>
               ))}
               {(r.tags || []).filter(t => ['Sweet','Savory'].includes(t)).map(t => (
                 <span key={t} style={{ background: 'var(--tag)', color: 'var(--muted)', borderRadius: 50, padding: '2px 10px', fontSize: 11, fontWeight: 500 }}>{t}</span>
               ))}
-              {(r.tags || []).filter(t => !['Pie','Cake','Cookies','Bread','Pasta','Soup','Salad','Appetizer','Side','Main','Sauce','Drink','Breakfast','Snack','Sweet','Savory'].includes(t)).map(t => (
+              {(r.tags || []).filter(t => !['Pie','Cake','Cookies','Bread','Pasta','Soup','Salad','Appetizer','Side','Main','Sauce','Drink','Breakfast','Snack','Dessert','Sweet','Savory'].includes(t)).map(t => (
                 <span key={t} style={{ background: 'var(--tag)', color: 'var(--muted)', borderRadius: 50, padding: '2px 10px', fontSize: 11, fontWeight: 400 }}>{t}</span>
               ))}
               {(r.dietary_tags || []).map(t => (
@@ -378,6 +378,35 @@ export default function RecipeCard({ recipe: r, onToggleMade, onUpdateLog, onUpd
         <div className="rc-storage">
           <div className="sec-label" style={{ marginBottom: 6 }}>Storage</div>
           <p>{r.storage}</p>
+        </div>
+      )}
+
+      {/* VARIATIONS */}
+      {r.variations && r.variations.length > 0 && (
+        <div style={{ borderTop: '1px solid var(--border)', padding: '16px 22px 20px' }}>
+          <div className="sec-label" style={{ marginBottom: 12 }}>Variations</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {r.variations.map((v, i) => (
+              <div key={i} style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginBottom: v.description || v.ingredient_changes || v.instruction_changes ? 8 : 0 }}>{v.name}</div>
+                {v.description && (
+                  <p style={{ fontSize: 13, color: 'var(--muted)', margin: '0 0 8px 0', lineHeight: 1.6 }}>{v.description}</p>
+                )}
+                {v.ingredient_changes && (
+                  <div style={{ marginBottom: v.instruction_changes ? 8 : 0 }}>
+                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>Ingredient Changes</div>
+                    <p style={{ fontSize: 13, color: 'var(--ink)', margin: 0, lineHeight: 1.6 }}>{v.ingredient_changes}</p>
+                  </div>
+                )}
+                {v.instruction_changes && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>Instruction Changes</div>
+                    <p style={{ fontSize: 13, color: 'var(--ink)', margin: 0, lineHeight: 1.6 }}>{v.instruction_changes}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
