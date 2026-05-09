@@ -17,8 +17,6 @@ interface QueueItem {
 }
 
 type ParseMode = 'immediate' | 'queue'
-type SessionMode = 'new' | 'existing'
-
 function CookbookSessionPageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -27,9 +25,8 @@ function CookbookSessionPageInner() {
   const [step, setStep] = useState<'setup' | 'import' | 'done'>('setup')
 
   // Cookbook setup
-  const [sessionMode, setSessionMode] = useState<SessionMode>('new')
   const [existingCookbooks, setExistingCookbooks] = useState<Cookbook[]>([])
-  const [selectedCookbook, setSelectedCookbook] = useState<Cookbook | null>(null)
+  const [matchedCookbook, setMatchedCookbook] = useState<Cookbook | null>(null)
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [pubYear, setPubYear] = useState('')
@@ -49,6 +46,18 @@ function CookbookSessionPageInner() {
       setExistingCookbooks(d.cookbooks || [])
     })
   }, [])
+
+  // Auto-fill author/year when title matches an existing cookbook
+  React.useEffect(() => {
+    const match = existingCookbooks.find(cb => cb.name.toLowerCase() === title.trim().toLowerCase())
+    if (match) {
+      setMatchedCookbook(match)
+      if (!author) setAuthor(match.author || '')
+      if (!pubYear) setPubYear(match.pub_year || '')
+    } else {
+      setMatchedCookbook(null)
+    }
+  }, [title, existingCookbooks])
 
   useEffect(() => {
     const draftId = searchParams.get('draft')
@@ -98,31 +107,28 @@ function CookbookSessionPageInner() {
 
 
 
-  const cookbookTitle = sessionMode === 'existing' ? selectedCookbook?.name || '' : title
-  const cookbookAuthor = sessionMode === 'existing' ? selectedCookbook?.author || '' : author
+  const cookbookTitle = title
+  const cookbookAuthor = author
 
-  const canStart = sessionMode === 'existing'
-    ? !!selectedCookbook
-    : !!title.trim()
+  const canStart = !!title.trim()
 
   const startSession = async () => {
-    // Save cookbook metadata if new
-    if (sessionMode === 'new' && title.trim()) {
-      const cb: Cookbook = {
-        id: title.toLowerCase().replace(/[^a-z0-9]/g, '-'),
-        name: title.trim(),
-        author: author.trim() || null,
-        pub_year: pubYear.trim() || null,
-        cover_url: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-      await fetch('/api/cookbooks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(cb)
-      })
+    if (!title.trim()) return
+    // Always upsert cookbook — uses existing ID if matched, generates new one if not
+    const cb: Cookbook = {
+      id: matchedCookbook?.id || title.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      name: title.trim(),
+      author: author.trim() || null,
+      pub_year: pubYear.trim() || null,
+      cover_url: matchedCookbook?.cover_url || null,
+      created_at: matchedCookbook?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }
+    await fetch('/api/cookbooks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cb)
+    })
     setStep('import')
   }
 
@@ -348,67 +354,28 @@ function CookbookSessionPageInner() {
         {step === 'setup' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-              Set up your cookbook once — all imported recipes will inherit these details automatically.
+              Enter the cookbook title — if it already exists in your library, the details will fill in automatically.
             </p>
 
-            {/* NEW vs EXISTING toggle */}
-            <div style={{ display: 'flex', background: 'var(--tag)', borderRadius: 10, padding: 3, gap: 2 }}>
-              {(['new', 'existing'] as const).map(m => (
-                <button key={m} onClick={() => setSessionMode(m)} style={{
-                  flex: 1, padding: '10px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  fontFamily: 'inherit', fontSize: 14, fontWeight: 500,
-                  background: sessionMode === m ? 'var(--card)' : 'transparent',
-                  color: sessionMode === m ? 'var(--ink)' : 'var(--muted)',
-                  boxShadow: sessionMode === m ? '0 1px 4px rgba(0,0,0,.08)' : 'none'
-                }}>
-                  {m === 'new' ? '✨ New Cookbook' : '📚 Continue Existing'}
-                </button>
-              ))}
+            <div style={{ background: 'var(--card)', borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 14, border: '1px solid var(--border)' }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Cookbook Title *</label>
+                <input className="input" style={{ fontSize: 16 }} placeholder="e.g. Four & Twenty Blackbirds Pie Book" value={title} onChange={e => setTitle(e.target.value)} autoFocus />
+                {matchedCookbook && (
+                  <div style={{ marginTop: 6, fontSize: 12, color: 'var(--green)', fontWeight: 500 }}>
+                    ✓ Continuing existing cookbook — details auto-filled
+                  </div>
+                )}
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Author(s)</label>
+                <input className="input" style={{ fontSize: 16 }} placeholder="e.g. Emily and Melissa Elsen" value={author} onChange={e => setAuthor(e.target.value)} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Publication Year</label>
+                <input className="input" style={{ fontSize: 16 }} placeholder="e.g. 2013" value={pubYear} onChange={e => setPubYear(e.target.value)} />
+              </div>
             </div>
-
-            {sessionMode === 'new' ? (
-              <div style={{ background: 'var(--card)', borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 14, border: '1px solid var(--border)' }}>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Cookbook Title *</label>
-                  <input className="input" style={{ fontSize: 16 }} placeholder="e.g. Four & Twenty Blackbirds Pie Book" value={title} onChange={e => setTitle(e.target.value)} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Author(s)</label>
-                  <input className="input" style={{ fontSize: 16 }} placeholder="e.g. Emily and Melissa Elsen" value={author} onChange={e => setAuthor(e.target.value)} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Publication Year</label>
-                  <input className="input" style={{ fontSize: 16 }} placeholder="e.g. 2013" value={pubYear} onChange={e => setPubYear(e.target.value)} />
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {existingCookbooks.length === 0 ? (
-                  <div style={{ background: 'var(--card)', borderRadius: 14, padding: 24, textAlign: 'center', border: '1px solid var(--border)', color: 'var(--muted)', fontSize: 14 }}>
-                    No cookbooks yet — start a new one!
-                  </div>
-                ) : existingCookbooks.map(cb => (
-                  <div key={cb.id} onClick={() => setSelectedCookbook(cb)} style={{
-                    background: 'var(--card)', borderRadius: 12, padding: '14px 16px',
-                    border: '2px solid ' + (selectedCookbook?.id === cb.id ? 'var(--accent)' : 'var(--border)'),
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12,
-                    transition: 'border-color .15s'
-                  }}>
-                    {cb.cover_url
-                      ? <img src={cb.cover_url} alt="" style={{ width: 44, height: 56, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
-                      : <div style={{ width: 44, height: 56, background: 'var(--accent-bg)', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>📚</div>
-                    }
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: 15 }}>{cb.name}</div>
-                      {cb.author && <div style={{ fontSize: 13, color: 'var(--muted)', fontStyle: 'italic' }}>{cb.author}</div>}
-                    </div>
-                    {selectedCookbook?.id === cb.id && (
-                      <div style={{ marginLeft: 'auto', width: 24, height: 24, borderRadius: '50%', background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>✓</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
 
             {/* PARSE MODE */}
             <div style={{ background: 'var(--card)', borderRadius: 14, padding: 16, border: '1px solid var(--border)' }}>
