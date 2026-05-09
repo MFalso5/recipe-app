@@ -102,9 +102,11 @@ export interface FoodForThoughtEntry {
 }
 
 export interface IdeaNote {
+  is_scratchpad?: boolean
   id: string
   title: string
   content: string | null
+  is_scratchpad?: boolean
   tags: string[]
   created_at: string
   updated_at: string
