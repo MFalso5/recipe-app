@@ -227,9 +227,9 @@ export async function dbSaveCookbook(cookbook: unknown) {
 }
 
 // ── DUPLICATE CHECK ──
-export async function dbFindDuplicate(title: string, source: string): Promise<import('./types').Recipe | null> {
+export async function dbFindDuplicate(title: string, source: string): Promise<Recipe | null> {
   await initDb()
-  const rows = await sql\`SELECT data FROM recipes WHERE data->>'title' = ${title} AND data->>'source' = ${source} LIMIT 1\`
+  const rows = await sql`SELECT data FROM recipes WHERE data->>'title' = ${title} AND data->>'source' = ${source} LIMIT 1`
   if (!rows[0]?.data) return null
   return migrateRecipe(rows[0].data)
 }
