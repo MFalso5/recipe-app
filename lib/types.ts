@@ -1,8 +1,8 @@
 export interface Variation {
   name: string
   description: string | null
-  ingredient_changes: string | null  // free-text: additions, substitutions, omissions
-  instruction_changes: string | null // free-text: method differences
+  ingredient_changes: string | null
+  instruction_changes: string | null
 }
 
 export interface Ingredient {
@@ -40,6 +40,13 @@ export interface SubRecipe {
   source_type?: 'website' | 'cookbook' | 'image' | 'manual'
 }
 
+export interface MadeItEntry {
+  id: string
+  date: string
+  note: string | null
+  rating: 'would-make-again' | 'make-with-changes' | 'wouldnt-make-again' | null
+}
+
 export interface Recipe {
   id: string
   title: string
@@ -57,18 +64,19 @@ export interface Recipe {
   ingredient_groups: IngredientGroup[]
   step_groups: StepGroup[]
   notes: string[] | null
+  tips: string[] | null
   storage: string | null
   variations: Variation[] | null
   sub_recipes: SubRecipe[] | null
+  made: boolean
+  favorited: boolean
+  made_log: MadeItEntry[] | null
+  gallery_urls: string[] | null
+  page_number: string | null
   tags: string[]
   dietary_tags: string[]
-}
-
-export interface MadeItEntry {
-  id: string
-  date: string
-  note: string | null
-  rating: 'would-make-again' | 'make-with-changes' | 'wouldnt-make-again' | null
+  created_at: string
+  updated_at: string
 }
 
 export interface Cookbook {
