@@ -47,7 +47,7 @@ export default function IdeasPage() {
 
   const createNote = async () => {
     if (!newTitle.trim()) return
-    const note: IdeaNote = { id: crypto.randomUUID(), title: newTitle.trim(), content: '', is_scratchpad: false, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+    const note: IdeaNote = { id: crypto.randomUUID(), title: newTitle.trim(), content: '', is_scratchpad: false, tags: [], created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
     await fetch('/api/research', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(note) })
     setIdeas(prev => [prev.find(i => i.is_scratchpad)!, note, ...prev.filter(i => !i.is_scratchpad)])
     setActiveId(note.id)
