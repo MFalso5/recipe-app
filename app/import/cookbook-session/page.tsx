@@ -452,7 +452,6 @@ function CookbookSessionPageInner() {
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 multiple
                 onChange={e => { if (e.target.files) Array.from(e.target.files).forEach(addPhoto); e.target.value = '' }}
                 style={{ display: 'none' }}
