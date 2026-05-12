@@ -98,7 +98,10 @@ export async function POST(req: NextRequest) {
       const raw = response.content
         .map((b: { type: string; text?: string }) => b.type === 'text' ? b.text : '')
         .join('')
+      console.log('BATCH RAW RESPONSE (first 500 chars):', raw.slice(0, 500))
+      console.log('BATCH RAW RESPONSE (last 200 chars):', raw.slice(-200))
       const clean = extractJSONArray(raw.replace(/```json|```/g, '').trim())
+      console.log('BATCH CLEAN (first 200 chars):', clean.slice(0, 200))
 
       let parsed: unknown[]
       try {
