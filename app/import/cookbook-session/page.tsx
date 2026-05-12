@@ -204,24 +204,36 @@ function CookbookSessionPageInner() {
     }])
 
     try {
-      const fd = new FormData()
-      const converted = await Promise.all(pagesToParse.map((p, i) => compressFile(p.file, i)))
-      converted.forEach(f => fd.append('images', f))
-      fd.append('batch_mode', 'true')
+      // Split into chunks of 2 pages to stay within Vercel's 60s timeout.
+      // Results from each chunk are combined into a single review queue.
+      const chunks: StagedPage[][] = []
+      for (let i = 0; i < pagesToParse.length; i += 2) {
+        chunks.push(pagesToParse.slice(i, i + 2))
+      }
 
-      const res = await fetch('/api/parse-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok || data.error) throw new Error(data.error || 'Parse failed')
+      const allRecipes: unknown[] = []
 
-      const recipes: unknown[] = Array.isArray(data.recipes)
-        ? data.recipes
-        : [data.recipes || data.recipe]
+      for (const chunk of chunks) {
+        const fd = new FormData()
+        const converted = await Promise.all(chunk.map((p, i) => compressFile(p.file, i)))
+        converted.forEach(f => fd.append('images', f))
+        fd.append('batch_mode', 'true')
+
+        const res = await fetch('/api/parse-image', { method: 'POST', body: fd })
+        const data = await res.json()
+        if (!res.ok || data.error) throw new Error(data.error || 'Parse failed')
+
+        const recipes: unknown[] = Array.isArray(data.recipes)
+          ? data.recipes
+          : [data.recipes || data.recipe]
+        allRecipes.push(...recipes)
+      }
 
       // Remove placeholder
       setQueue(prev => prev.filter(i => i.id !== placeholderId))
 
-      // One review item per recipe found
-      const newItems: QueueItem[] = recipes.map((r: unknown) => {
+      // One review item per recipe found across all chunks
+      const newItems: QueueItem[] = allRecipes.map((r: unknown) => {
         const rd = r as Record<string, unknown>
         const recipe: Partial<Recipe> = {
           ...rd as Partial<Recipe>,
