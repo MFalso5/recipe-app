@@ -164,7 +164,9 @@ function CookbookSessionPageInner() {
         URL.revokeObjectURL(url)
         const canvas = document.createElement('canvas')
         let { width, height } = img
-        const maxDim = 1800
+        // Batch mode uses smaller images to stay within Vercel's 60s timeout.
+        // 1200px is more than sufficient for cookbook text extraction.
+        const maxDim = 1200
         if (width > maxDim || height > maxDim) {
           if (width > height) { height = Math.round(height * maxDim / width); width = maxDim }
           else { width = Math.round(width * maxDim / height); height = maxDim }
@@ -174,7 +176,7 @@ function CookbookSessionPageInner() {
         if (ctx) ctx.drawImage(img, 0, 0, width, height)
         canvas.toBlob(blob => {
           resolve(blob ? new File([blob], 'page_' + (index + 1) + '.jpg', { type: 'image/jpeg' }) : f)
-        }, 'image/jpeg', 0.88)
+        }, 'image/jpeg', 0.78)
       }
       img.onerror = () => { URL.revokeObjectURL(url); resolve(f) }
       img.src = url
