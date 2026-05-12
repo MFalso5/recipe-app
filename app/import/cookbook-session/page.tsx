@@ -165,8 +165,8 @@ function CookbookSessionPageInner() {
         const canvas = document.createElement('canvas')
         let { width, height } = img
         // Batch mode uses smaller images to stay within Vercel's 60s timeout.
-        // 1200px is more than sufficient for cookbook text extraction.
-        const maxDim = 1200
+        // 900px is sufficient for cookbook text extraction.
+        const maxDim = 900
         if (width > maxDim || height > maxDim) {
           if (width > height) { height = Math.round(height * maxDim / width); width = maxDim }
           else { width = Math.round(width * maxDim / height); height = maxDim }
@@ -176,7 +176,7 @@ function CookbookSessionPageInner() {
         if (ctx) ctx.drawImage(img, 0, 0, width, height)
         canvas.toBlob(blob => {
           resolve(blob ? new File([blob], 'page_' + (index + 1) + '.jpg', { type: 'image/jpeg' }) : f)
-        }, 'image/jpeg', 0.78)
+        }, 'image/jpeg', 0.75)
       }
       img.onerror = () => { URL.revokeObjectURL(url); resolve(f) }
       img.src = url
@@ -220,8 +220,16 @@ function CookbookSessionPageInner() {
         fd.append('batch_mode', 'true')
 
         const res = await fetch('/api/parse-image', { method: 'POST', body: fd })
-        const data = await res.json()
-        if (!res.ok || data.error) throw new Error(data.error || 'Parse failed')
+        if (!res.ok) {
+          throw new Error(res.status === 504 ? 'Timed out — try fewer pages at once' : 'Server error ' + res.status)
+        }
+        let data: Record<string, unknown>
+        try {
+          data = await res.json() as Record<string, unknown>
+        } catch {
+          throw new Error('Timed out — try fewer pages at once')
+        }
+        if (data.error) throw new Error(data.error as string)
 
         const recipes: unknown[] = Array.isArray(data.recipes)
           ? data.recipes
