@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     if (batchMode) {
       const response = await client.messages.create({
         model: 'claude-sonnet-4-5',
-        max_tokens: 8000,
+        max_tokens: 16000,
         system: PARSE_SYSTEM_PROMPT + BATCH_RULES,
         messages: [{
           role: 'user',
