@@ -5,7 +5,7 @@ import { Recipe, Menu, Cookbook, DIETARY_TAGS } from '@/lib/types'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-type ViewMode = 'all' | 'collections'
+type ViewMode = 'all' | 'collections' | 'menus'
 
 interface Collection {
   name: string
@@ -21,13 +21,12 @@ export default function Home() {
   const [menus, setMenus] = useState<Menu[]>([])
   const [cookbooks, setCookbooks] = useState<Cookbook[]>([])
   const [editingCookbook, setEditingCookbook] = useState<string | null>(null)
-  const [cookbookSort, setCookbookSort] = useState<'author' | 'title'>('title')
+  const [cookbookSort, setCookbookSort] = useState<'author' | 'title'>('author')
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<ViewMode>('all')
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('recent')
   const [filterOpen, setFilterOpen] = useState(false)
-  const [favoritesOnly, setFavoritesOnly] = useState(false)
   const [smartSearch, setSmartSearch] = useState('')
   const [smartResults, setSmartResults] = useState<string[] | null>(null)
   const [smartLoading, setSmartLoading] = useState(false)
@@ -37,13 +36,7 @@ export default function Home() {
   })
   const [ingredientSearch, setIngredientSearch] = useState('')
   const [activeCollection, setActiveCollection] = useState<Collection | null>(null)
-  const [threshold, setThreshold] = useState(3)
   const filterRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const saved = localStorage.getItem('collection_threshold')
-    if (saved) setThreshold(parseInt(saved) || 3)
-  }, [])
 
   useEffect(() => {
     Promise.all([
@@ -66,7 +59,7 @@ export default function Home() {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [filterOpen])
 
-  const collections: Collection[] = (Array.from(new Set(recipes.map(r => r.source).filter(Boolean))) as string[])
+  const collections: Collection[] = Array.from(new Set(recipes.map(r => r.source).filter(Boolean)))
     .map(source => {
       const sourceRecipes = recipes.filter(r => r.source === source).sort((a,b) => a.title.localeCompare(b.title))
       const sample = sourceRecipes[0]
@@ -80,28 +73,12 @@ export default function Home() {
     })
     .sort((a, b) => b.recipes.length - a.recipes.length)
 
-  const cookbookCollections = collections.filter(c => c.source_type === 'cookbook' && c.recipes.length >= threshold)
-  const pooledCookbooks = collections.filter(c => c.source_type === 'cookbook' && c.recipes.length < threshold)
-  const otherCookbooks: Collection | null = pooledCookbooks.length > 0 ? {
-    name: 'Other Cookbooks',
-    recipes: pooledCookbooks.flatMap(col => col.recipes).sort((a, b) => a.title.localeCompare(b.title)),
-    source_type: 'cookbook',
-    author: null,
-    cover_url: null
-  } : null
-  const websiteCollections = collections.filter(c => c.source_type !== 'cookbook' && c.recipes.length >= threshold)
-  const pooledCollections = collections.filter(c => c.source_type !== 'cookbook' && c.recipes.length < threshold)
-  const blogsAndSocial: Collection | null = pooledCollections.length > 0 ? {
-    name: 'Blogs & Social',
-    recipes: pooledCollections.flatMap(col => col.recipes).sort((a, b) => a.title.localeCompare(b.title)),
-    source_type: 'other',
-    author: null,
-    cover_url: null
-  } : null
+  const cookbookCollections = collections.filter(c => c.source_type === 'cookbook')
+  const websiteCollections = collections.filter(c => c.source_type !== 'cookbook')
   const ketoRecipes = recipes.filter(r => (r.dietary_tags || []).includes('Keto') || (r.tags || []).includes('Keto'))
 
   const allTags = Array.from(new Set(recipes.flatMap(r => (r.tags || []).filter(t => !DIETARY_TAGS.includes(t))))).sort()
-  const allSources = Array.from(new Set(recipes.map(r => r.source).filter(Boolean) as string[])).sort()
+  const allSources = Array.from(new Set(recipes.map(r => r.source).filter(Boolean))).sort()
   const activeFilterCount = filters.dietary.length + filters.sources.length + filters.tags.length + filters.ingredients.length + (filters.made !== 'all' ? 1 : 0)
 
   const toggleFilter = (type: 'dietary' | 'sources' | 'tags', val: string) => {
@@ -128,13 +105,12 @@ export default function Home() {
   }
 
   const filterRecipesWithFilters = (list: Recipe[]) => list.filter(r => {
-    if (favoritesOnly && !r.favorited) return false
     const q = search.toLowerCase()
     const matchSearch = !q || r.title.toLowerCase().includes(q) || (r.source || '').toLowerCase().includes(q) ||
       (r.tags || []).some(t => t.toLowerCase().includes(q)) ||
       r.ingredient_groups?.some(g => g.ingredients.some(i => i.name.toLowerCase().includes(q)))
     const matchDietary = filters.dietary.length === 0 || filters.dietary.every(d => (r.dietary_tags || r.tags || []).includes(d))
-    const matchSource = filters.sources.length === 0 || (r.source !== null && filters.sources.includes(r.source))
+    const matchSource = filters.sources.length === 0 || filters.sources.includes(r.source)
     const matchTags = filters.tags.length === 0 || filters.tags.some(t => (r.tags || []).includes(t))
     const matchMade = filters.made === 'all' || (filters.made === 'made' ? r.made : !r.made)
     const matchIngredients = filters.ingredients.length === 0 || filters.ingredients.every(fi => r.ingredient_groups?.some(g => g.ingredients.some(i => i.name.toLowerCase().includes(fi.toLowerCase()))))
@@ -161,12 +137,8 @@ export default function Home() {
       <div style={{ background: 'var(--card)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: 60, display: 'flex', alignItems: 'center', gap: 16 }}>
           <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 22, fontWeight: 700, whiteSpace: 'nowrap', marginRight: 8 }}>Recipe Collector</h1>
-          {/* + IMPORT BUTTON */}
-          <Link href="/import" className="btn btn-primary btn-sm" style={{ whiteSpace: 'nowrap' }}>+ Import</Link>
-
-          {/* PRIMARY TABS */}
           <div style={{ display: 'flex', background: 'var(--tag)', borderRadius: 10, padding: 3, gap: 2 }}>
-            {(['all', 'collections'] as ViewMode[]).map(v => (
+            {(['all', 'collections', 'menus'] as ViewMode[]).map(v => (
               <button key={v} onClick={() => { setView(v); setActiveCollection(null) }} style={{
                 padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
                 fontFamily: 'inherit', fontSize: 13, fontWeight: 500,
@@ -174,14 +146,23 @@ export default function Home() {
                 color: view === v ? 'var(--ink)' : 'var(--muted)',
                 boxShadow: view === v ? '0 1px 4px rgba(0,0,0,.08)' : 'none', transition: 'all .15s'
               }}>
-                {v === 'all' ? 'All Recipes (' + recipes.length + ')' : 'Collections (' + collections.length + ')'}
+                {v === 'all' ? 'All Recipes (' + recipes.length + ')' : v === 'collections' ? 'Collections (' + collections.length + ')' : 'Menus (' + menus.length + ')'}
               </button>
             ))}
           </div>
-
-          {/* MORE DROPDOWN */}
-          <div style={{ marginLeft: 'auto', position: 'relative' }}>
-            <MoreMenu menus={menus} onCreateMenu={createMenu} />
+          {/* ADD + BATCH — between primary and secondary nav */}
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            {view === 'menus' && (
+              <button onClick={createMenu} className="btn btn-ghost btn-sm">+ New Menu</button>
+            )}
+            <Link href="/import" className="btn btn-primary btn-sm" style={{ whiteSpace: 'nowrap' }}>+ Add Recipe</Link>
+            <Link href="/import/batch" className="btn btn-ghost btn-sm" style={{ whiteSpace: 'nowrap' }}>📂 Batch</Link>
+          </div>
+          <Link href="/meal-prep-list" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, color: 'var(--muted)', textDecoration: 'none', background: 'var(--tag)', whiteSpace: 'nowrap' }}>🥘 Meal Prep</Link>
+          <Link href="/research" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, color: 'var(--muted)', textDecoration: 'none', background: 'var(--tag)', whiteSpace: 'nowrap' }}>🔬 Research</Link>
+          <Link href="/saved-articles" style={{ padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, color: 'var(--muted)', textDecoration: 'none', background: 'var(--tag)', whiteSpace: 'nowrap' }}>📌 Saved Articles</Link>
+          <div style={{ marginLeft: 'auto' }}>
+            <Link href="/settings" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 34, height: 34, borderRadius: 8, background: 'var(--tag)', color: 'var(--muted)', textDecoration: 'none', fontSize: 16, flexShrink: 0 }} title="Settings">⚙️</Link>
           </div>
         </div>
       </div>
@@ -214,14 +195,10 @@ export default function Home() {
               </div>
             )}
             {!activeCollection && !smartMode && (
-              <select className="input" style={{ width: 'auto' }} value={favoritesOnly ? 'favorites' : sort} onChange={e => {
-                if (e.target.value === 'favorites') { setFavoritesOnly(true); setSort('recent') }
-                else { setFavoritesOnly(false); setSort(e.target.value) }
-              }}>
+              <select className="input" style={{ width: 'auto' }} value={sort} onChange={e => setSort(e.target.value)}>
                 <option value="recent">Most recent</option>
-                <option value="alpha">A to Z</option>
+                <option value="alpha">A → Z</option>
                 <option value="made">Made first</option>
-                <option value="favorites">★ Favorites</option>
               </select>
             )}
             <button onClick={() => { setSmartMode(!smartMode); clearSmartSearch() }} style={{
@@ -355,7 +332,7 @@ export default function Home() {
                     <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 24 }}>Add your first recipe to get started</p>
                     <Link href="/import" className="btn btn-primary">+ Add Recipe</Link>
                   </div>
-                ) : <RecipeGrid recipes={filtered} cookbooks={cookbooks} />}
+                ) : <RecipeGrid recipes={filtered} />}
               </>
             )}
 
@@ -436,7 +413,7 @@ export default function Home() {
                             onClose={() => setEditingCookbook(null)}
                             onSave={async (author: string, coverUrl: string | null, pubYear: string | null) => {
                               const updated: Cookbook = {
-                                id: cb?.id || editingCookbook.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+                                id: editingCookbook.toLowerCase().replace(/[^a-z0-9]/g, '-'),
                                 name: editingCookbook,
                                 author: author || null,
                                 cover_url: coverUrl,
@@ -454,13 +431,6 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* OTHER COOKBOOKS */}
-                  {otherCookbooks && (
-                    <div style={{ marginTop: 20, marginBottom: 20 }}>
-                      <CollectionCard collection={otherCookbooks} onClick={() => { setActiveCollection(otherCookbooks); setSearch('') }} />
-                    </div>
-                  )}
-
                   {/* WEBSITES & BLOGS */}
                   {websiteCollections.length > 0 && (
                     <div style={{ marginBottom: 36 }}>
@@ -474,17 +444,6 @@ export default function Home() {
                     </div>
                   )}
 
-                  {/* BLOGS & SOCIAL */}
-                  {blogsAndSocial && (
-                    <div style={{ marginTop: websiteCollections.length > 0 ? 28 : 0, marginBottom: 36 }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 16 }}>
-                        <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 700 }}>📱 Blogs &amp; Social</h2>
-                        <span style={{ fontSize: 13, color: 'var(--muted)' }}>{pooledCollections.length} sources · {blogsAndSocial.recipes.length} recipes</span>
-                      </div>
-                      <CollectionCard collection={blogsAndSocial} onClick={() => { setActiveCollection(blogsAndSocial); setSearch('') }} />
-                    </div>
-                  )}
-
                   {/* KETO */}
                   {ketoRecipes.length > 0 && (
                     <div>
@@ -492,7 +451,7 @@ export default function Home() {
                         <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 700 }}>🥑 Keto</h2>
                         <span style={{ fontSize: 13, color: 'var(--muted)' }}>{ketoRecipes.length} recipes</span>
                       </div>
-                      <RecipeGrid recipes={ketoRecipes} cookbooks={cookbooks} />
+                      <RecipeGrid recipes={ketoRecipes} />
                     </div>
                   )}
                 </>
@@ -527,10 +486,42 @@ export default function Home() {
                   <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                     <p style={{ color: 'var(--muted)', fontSize: 15 }}>No recipes match your search.</p>
                   </div>
-                ) : <RecipeGrid recipes={smartResults !== null ? filterRecipes(activeCollection.recipes) : filterRecipesWithFilters(activeCollection.recipes)} cookbooks={cookbooks} />}
+                ) : <RecipeGrid recipes={smartResults !== null ? filterRecipes(activeCollection.recipes) : filterRecipesWithFilters(activeCollection.recipes)} />}
               </>
             )}
 
+            {/* MENUS */}
+            {view === 'menus' && (
+              menus.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>🍽️</div>
+                  <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 24, marginBottom: 8 }}>No menus yet</h2>
+                  <p style={{ color: 'var(--muted)', fontSize: 15, marginBottom: 24 }}>Create a menu for your next holiday or event</p>
+                  <button onClick={createMenu} className="btn btn-primary">+ New Menu</button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>{menus.length} {menus.length === 1 ? 'menu' : 'menus'}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+                    {menus.map(menu => (
+                      <Link href={'/menus/' + menu.id} key={menu.id} style={{ textDecoration: 'none' }}>
+                        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, padding: '20px 22px', cursor: 'pointer', transition: 'transform .18s, box-shadow .18s' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 32px rgba(0,0,0,.1)' }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}>
+                          <div style={{ fontSize: 32, marginBottom: 12 }}>🍽️</div>
+                          <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 20, fontWeight: 600, marginBottom: 4 }}>{menu.name}</div>
+                          {menu.date && <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>📅 {menu.date}</div>}
+                          <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                            {menu.courses.filter(c => c.recipes.length > 0).length} courses · {menu.courses.reduce((n, c) => n + c.recipes.length, 0)} dishes
+                          </div>
+                          {menu.make_ahead.length > 0 && <div style={{ fontSize: 12, color: 'var(--accent)', marginTop: 6 }}>📋 {menu.make_ahead.length} make-ahead items</div>}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )
+            )}
           </>
         )}
       </div>
@@ -563,69 +554,6 @@ function CookbookCard({ collection, cookbook, onClick, onEdit }: { collection: C
           {madeCount > 0 && <span style={{ color: 'var(--green)', fontWeight: 500 }}>✓ {madeCount} made</span>}
         </div>
       </div>
-    </div>
-  )
-}
-
-
-function MoreMenu({ menus, onCreateMenu }: { menus: unknown[], onCreateMenu: () => void }) {
-  const [open, setOpen] = React.useState(false)
-  const ref = React.useRef<HTMLDivElement>(null)
-
-  React.useEffect(() => {
-    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
-
-  const item = (href: string, icon: string, label: string, soon?: boolean) => (
-    soon ? (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', fontSize: 13, color: 'var(--muted)', opacity: .5 }}>
-        <span>{icon}</span><span>{label}</span><span style={{ marginLeft: 'auto', fontSize: 10, background: 'var(--tag)', padding: '1px 6px', borderRadius: 50 }}>Soon</span>
-      </div>
-    ) : (
-      <Link href={href} onClick={() => setOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', fontSize: 13, color: 'var(--ink)', textDecoration: 'none', borderRadius: 6, transition: 'background .1s' }}
-        onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.background = 'var(--cream)'}
-        onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.background = 'transparent'}>
-        <span>{icon}</span><span>{label}</span>
-      </Link>
-    )
-  )
-
-  return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <button onClick={() => setOpen(o => !o)} style={{
-        display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px',
-        background: open ? 'var(--tag)' : 'var(--card)', border: '0.5px solid var(--border)',
-        borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, color: 'var(--muted)', fontWeight: 500
-      }}>
-        More {open ? '▲' : '▼'}
-      </button>
-      {open && (
-        <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 6, background: 'var(--card)', border: '0.5px solid var(--border)', borderRadius: 12, boxShadow: '0 8px 32px rgba(0,0,0,.12)', minWidth: 220, zIndex: 100, padding: '6px' }}>
-          {item('/menus', '📋', 'Menus')}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', fontSize: 13, color: 'var(--ink)', cursor: 'pointer', borderRadius: 6 }}
-            onClick={() => { onCreateMenu(); setOpen(false) }}
-            onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background = 'var(--cream)'}
-            onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background = 'transparent'}>
-            <span>+</span><span>New Menu</span>
-          </div>
-          {item('/meal-prep-list', '🥘', 'Meal Prep')}
-          {item('/research', '🔬', 'Research')}
-          {item('/saved-articles', '📌', 'Saved Articles')}
-          <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
-          {item('/bulk-tags', '🏷', 'Bulk Tag Editor')}
-          {item('/import/batch', '📂', 'Batch Import')}
-          {item('/import/cookbook-session', '📚', 'Cookbook Session')}
-          <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
-          {item('/settings', '⚙️', 'Settings')}
-          <div style={{ height: 1, background: 'var(--border)', margin: '6px 0' }} />
-          {item('', '💰', 'Cost per Serving', true)}
-          {item('', '🥗', 'Nutrition Info', true)}
-          {item('', '⚖️', 'Recipe Scaling', true)}
-          {item('', '🔬', 'Recipe Analyzer', true)}
-        </div>
-      )}
     </div>
   )
 }
@@ -664,6 +592,10 @@ function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, 
             <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Publication Year</label>
             <input className="input" value={pubYear} onChange={e => setPubYear(e.target.value)} placeholder="e.g. 2013" />
           </div>
+          <div>
+            <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Publication Year</label>
+            <input className="input" value={pubYear} onChange={e => setPubYear(e.target.value)} placeholder="e.g. 2013" />
+          </div>
 
           <div>
             <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Cover Photo</label>
@@ -697,41 +629,18 @@ function CookbookEditModal({ name, cookbook, onSave, onClose }: { name: string, 
 function CollectionCard({ collection, onClick }: { collection: Collection, onClick: () => void }) {
   const photos = collection.recipes.map(r => r.image_url).filter(Boolean).slice(0, 4) as string[]
   const madeCount = collection.recipes.filter(r => r.made).length
-  const isOtherCookbooks = collection.name === 'Other Cookbooks'
-  const isBlogsAndSocial = collection.name === 'Blogs & Social'
-
   return (
     <div onClick={onClick} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 18, overflow: 'hidden', cursor: 'pointer', transition: 'transform .18s, box-shadow .18s' }}
       onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 32px rgba(0,0,0,.1)' }}
       onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.transform = 'none'; (e.currentTarget as HTMLDivElement).style.boxShadow = 'none' }}>
-
-      {isOtherCookbooks ? (
-        <div style={{ height: 160, background: '#D8EBCF', display: 'flex', overflow: 'hidden' }}>
-          <div style={{ width: 14, background: '#4A7A3A', flexShrink: 0 }} />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 12 }}>
-            <div style={{ fontSize: 36, lineHeight: 1 }}>📚</div>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: '#4A7A3A', textAlign: 'center' as const, lineHeight: 1.4 }}>Other<br />Cookbooks</div>
-          </div>
-        </div>
-      ) : isBlogsAndSocial ? (
-        <div style={{ height: 160, background: '#EEF2FF', display: 'flex', overflow: 'hidden' }}>
-          <div style={{ width: 14, background: '#4F6BDB', flexShrink: 0 }} />
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: 12 }}>
-            <div style={{ fontSize: 36, lineHeight: 1 }}>🌐</div>
-            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase' as const, color: '#4F6BDB', textAlign: 'center' as const, lineHeight: 1.4 }}>Blogs &<br />Social</div>
-          </div>
-        </div>
-      ) : (
-        <div style={{ height: 160, display: 'grid', gridTemplateColumns: photos.length >= 2 ? '1fr 1fr' : '1fr', gridTemplateRows: photos.length >= 3 ? '1fr 1fr' : '1fr', gap: 2, background: 'var(--tag)' }}>
-          {photos.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>📚</div>
-            : photos.slice(0, 4).map((url, i) => (
-              <div key={i} style={{ overflow: 'hidden', gridColumn: photos.length === 1 ? '1/-1' : undefined, gridRow: photos.length === 3 && i === 0 ? '1/3' : undefined }}>
-                <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              </div>
-            ))}
-        </div>
-      )}
-
+      <div style={{ height: 160, display: 'grid', gridTemplateColumns: photos.length >= 2 ? '1fr 1fr' : '1fr', gridTemplateRows: photos.length >= 3 ? '1fr 1fr' : '1fr', gap: 2, background: 'var(--tag)' }}>
+        {photos.length === 0 ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>📚</div>
+          : photos.slice(0, 4).map((url, i) => (
+            <div key={i} style={{ overflow: 'hidden', gridColumn: photos.length === 1 ? '1/-1' : undefined, gridRow: photos.length === 3 && i === 0 ? '1/3' : undefined }}>
+              <img src={url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </div>
+          ))}
+      </div>
       <div style={{ padding: '14px 16px 16px' }}>
         <div style={{ fontFamily: 'Playfair Display, serif', fontSize: 18, fontWeight: 600, marginBottom: 5 }}>{collection.name}</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 13, color: 'var(--muted)' }}>
@@ -743,20 +652,15 @@ function CollectionCard({ collection, onClick }: { collection: Collection, onCli
   )
 }
 
-function RecipeGrid({ recipes, cookbooks }: { recipes: Recipe[], cookbooks?: Cookbook[] }) {
+function RecipeGrid({ recipes }: { recipes: Recipe[] }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
-      {recipes.map(r => {
-        const cbCover = !r.image_url && cookbooks ? cookbooks.find(c => c.name === r.source)?.cover_url : null
-        return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 18 }}>
+      {recipes.map(r => (
         <Link href={'/recipe/' + r.id} key={r.id} style={{ display: 'block', textDecoration: 'none' }}>
           <div className="lib-card">
-            {r.image_url ? <img className="lib-card-img" src={r.image_url} alt={r.title} />
-              : cbCover ? <img className="lib-card-img" src={cbCover} alt={r.title} style={{ opacity: 0.6 }} />
-              : <div className="lib-card-placeholder">🍽️</div>}
+            {r.image_url ? <img className="lib-card-img" src={r.image_url} alt={r.title} /> : <div className="lib-card-placeholder">🍽️</div>}
             <div className="lib-card-body">
               <div className="lib-card-tags">
-                {r.favorited && <span style={{ fontSize: 12, color: '#854D0E' }}>★</span>}
                 {r.made && (() => {
                   const lastEntry = (r.made_log || [])[0]
                   const ratingColors: Record<string, string> = { 'would-make-again': 'var(--green)', 'make-with-changes': 'var(--accent)', 'wouldnt-make-again': '#ef4444' }
@@ -782,8 +686,7 @@ function RecipeGrid({ recipes, cookbooks }: { recipes: Recipe[], cookbooks?: Coo
             </div>
           </div>
         </Link>
-        )
-      })}
+      ))}
     </div>
   )
 }
