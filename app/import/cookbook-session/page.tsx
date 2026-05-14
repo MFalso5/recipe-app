@@ -37,6 +37,7 @@ function CookbookSessionPageInner() {
 
   const [existingCookbooks, setExistingCookbooks] = useState<Cookbook[]>([])
   const [matchedCookbook, setMatchedCookbook] = useState<Cookbook | null>(null)
+  const [showCookbookDropdown, setShowCookbookDropdown] = useState(false)
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
   const [pubYear, setPubYear] = useState('')
@@ -363,12 +364,80 @@ function CookbookSessionPageInner() {
         {step === 'setup' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <p style={{ fontSize: 14, color: 'var(--muted)' }}>
-              Enter the cookbook title — if it already exists in your library, the details will fill in automatically.
+              Search for an existing cookbook or type a new title to create one. Author and year auto-fill for existing cookbooks.
             </p>
             <div style={{ background: 'var(--card)', borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 14, border: '1px solid var(--border)' }}>
-              <div>
+              <div style={{ position: 'relative' }}>
                 <label style={{ fontSize: 11, fontWeight: 600, letterSpacing: .8, textTransform: 'uppercase', color: 'var(--muted)', display: 'block', marginBottom: 6 }}>Cookbook Title *</label>
-                <input className="input" style={{ fontSize: 16 }} placeholder="e.g. Bouchon Bakery" value={title} onChange={e => setTitle(e.target.value)} autoFocus />
+                <input
+                  className="input"
+                  style={{ fontSize: 16 }}
+                  placeholder="Search or create a cookbook…"
+                  value={title}
+                  autoFocus
+                  autoComplete="off"
+                  onChange={e => {
+                    setTitle(e.target.value)
+                    setMatchedCookbook(null)
+                    setShowCookbookDropdown(true)
+                  }}
+                  onFocus={() => setShowCookbookDropdown(true)}
+                  onBlur={() => setTimeout(() => setShowCookbookDropdown(false), 150)}
+                />
+                {showCookbookDropdown && (
+                  (() => {
+                    const filtered = existingCookbooks.filter(cb =>
+                      title.trim() === '' || cb.name.toLowerCase().includes(title.trim().toLowerCase())
+                    ).slice(0, 6)
+                    const exactMatch = existingCookbooks.some(cb => cb.name.toLowerCase() === title.trim().toLowerCase())
+                    if (filtered.length === 0 && title.trim() === '') return null
+                    return (
+                      <div style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                        background: 'var(--card)', border: '1px solid var(--border)',
+                        borderRadius: 10, marginTop: 4, overflow: 'hidden',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.10)'
+                      }}>
+                        {filtered.map(cb => (
+                          <div
+                            key={cb.id}
+                            onMouseDown={() => {
+                              setTitle(cb.name)
+                              setAuthor(cb.author || '')
+                              setPubYear(cb.pub_year || '')
+                              setMatchedCookbook(cb)
+                              setShowCookbookDropdown(false)
+                            }}
+                            style={{
+                              padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border)',
+                              fontSize: 14, display: 'flex', flexDirection: 'column', gap: 2
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            <span style={{ fontWeight: 500 }}>{cb.name}</span>
+                            {(cb.author || cb.pub_year) && (
+                              <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+                                {[cb.author, cb.pub_year].filter(Boolean).join(' · ')}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                        {!exactMatch && title.trim().length > 0 && (
+                          <div
+                            onMouseDown={() => setShowCookbookDropdown(false)}
+                            style={{
+                              padding: '10px 14px', cursor: 'default',
+                              fontSize: 13, color: 'var(--accent)', fontWeight: 500
+                            }}
+                          >
+                            ＋ Create new: "{title.trim()}"
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()
+                )}
                 {matchedCookbook && (
                   <div style={{ marginTop: 6, fontSize: 12, color: 'var(--green)', fontWeight: 500 }}>✓ Continuing existing cookbook — details auto-filled</div>
                 )}
