@@ -5,9 +5,38 @@ import { useRouter } from 'next/navigation'
 import { Recipe } from '@/lib/types'
 import Link from 'next/link'
 
+async function resizeImageFile(file: File, maxPx = 1200, quality = 0.85): Promise<File> {
+  return new Promise((resolve) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height))
+      const w = Math.round(img.width * scale)
+      const h = Math.round(img.height * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')!
+      ctx.drawImage(img, 0, 0, w, h)
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return resolve(file)
+          resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }))
+        },
+        'image/jpeg',
+        quality
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+    img.src = url
+  })
+}
+
 async function uploadImageToBlob(file: File): Promise<string> {
+  const resized = await resizeImageFile(file)
   const fd = new FormData()
-  fd.append('image', file)
+  fd.append('image', resized)
   const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
   const data = await res.json()
   if (data.error) throw new Error(data.error)
@@ -75,11 +104,8 @@ function CookbookCoverUploader({ current, onUpload, onClear }: { current: string
   const handleFile = async (file: File) => {
     setUploading(true)
     try {
-      const fd = new FormData()
-      fd.append('image', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) onUpload(data.url)
+      const url = await uploadImageToBlob(file)
+      if (url) onUpload(url)
     } finally { setUploading(false) }
   }
 
@@ -283,11 +309,8 @@ export default function EditRecipePage({ params }: { params: { id: string } }) {
             </div>
           )}
           <GalleryUploader onAdd={async (file) => {
-            const fd = new FormData()
-            fd.append('image', file)
-            const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-            const data = await res.json()
-            if (data.url) set('gallery_urls', [...(recipe.gallery_urls || []), data.url])
+            const url = await uploadImageToBlob(file)
+            if (url) set('gallery_urls', [...(recipe.gallery_urls || []), url])
           }} />
         </div>
 
