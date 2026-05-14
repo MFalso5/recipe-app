@@ -341,26 +341,49 @@ export default function ImportPage() {
 
             {mode === 'image' && (
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>Upload Photos</div>
-                <div onClick={() => fileRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files) }}
-                  style={{ border: '2px dashed var(--border)', borderRadius: 12, padding: '28px 20px', textAlign: 'center', cursor: 'pointer' }}>
-                  <input ref={fileRef} type="file" accept="image/*" multiple onChange={e => handleFiles(e.target.files)} style={{ display: 'none' }} />
-                  <div style={{ fontSize: 28, marginBottom: 8 }}>📷</div>
-                  <p style={{ fontSize: 14, color: 'var(--muted)' }}><strong style={{ color: 'var(--accent)' }}>Tap to choose</strong> or drag and drop</p>
-                  <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4, opacity: .7 }}>JPG, PNG, HEIC - Multiple pages OK</p>
+                <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>
+                  Recipe Pages {files.length > 0 && <span style={{ fontWeight: 400, textTransform: 'none', fontSize: 12, letterSpacing: 0 }}>— {files.length} page{files.length !== 1 ? 's' : ''} added</span>}
                 </div>
-                {files.length > 0 && (
-                  <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    {files.map((f, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 10, background: 'var(--cream)', borderRadius: 8 }}>
-                        <img src={URL.createObjectURL(f)} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500 }}>{f.name}</div>
-                          <div style={{ fontSize: 12, color: 'var(--muted)' }}>{(f.size / 1024).toFixed(0)} KB{files.length > 1 ? ' - Page ' + (i + 1) : ''}</div>
+                {files.length === 0 ? (
+                  <div onClick={() => fileRef.current?.click()} onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); handleFiles(e.dataTransfer.files) }}
+                    style={{ border: '2px dashed var(--border)', borderRadius: 12, padding: '28px 20px', textAlign: 'center', cursor: 'pointer' }}>
+                    <input ref={fileRef} type="file" accept="image/*" multiple onChange={e => handleFiles(e.target.files)} style={{ display: 'none' }} />
+                    <div style={{ fontSize: 28, marginBottom: 8 }}>📷</div>
+                    <p style={{ fontSize: 14, color: 'var(--muted)' }}><strong style={{ color: 'var(--accent)' }}>Tap to choose</strong> or drag and drop</p>
+                    <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4, opacity: .7 }}>JPG, PNG, HEIC · Add one page or several</p>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 10 }}>
+                      {files.map((f, i) => (
+                        <div key={i} style={{ position: 'relative', width: 90, flexShrink: 0 }}>
+                          <div style={{ position: 'relative', width: 90, height: 110, borderRadius: 8, overflow: 'hidden', border: '2px solid var(--border)', background: 'var(--cream)' }}>
+                            <img src={URL.createObjectURL(f)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <div style={{ position: 'absolute', top: 4, left: 4, width: 22, height: 22, borderRadius: '50%', background: 'var(--accent)', color: '#fff', fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {i + 1}
+                            </div>
+                            <button
+                              onClick={() => setFiles(files.filter((_, j) => j !== i))}
+                              style={{ position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >✕</button>
+                          </div>
+                          <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4, textAlign: 'center' }}>Page {i + 1}</div>
                         </div>
-                        <button onClick={() => setFiles(files.filter((_, j) => j !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 18, padding: 4 }}>x</button>
+                      ))}
+                      <div
+                        onClick={() => fileRef.current?.click()}
+                        style={{ width: 90, height: 110, borderRadius: 8, border: '2px dashed var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--accent)', gap: 4, flexShrink: 0 }}
+                      >
+                        <span style={{ fontSize: 24, lineHeight: 1 }}>＋</span>
+                        <span style={{ fontSize: 11, fontWeight: 500 }}>Add page</span>
                       </div>
-                    ))}
+                    </div>
+                    <input ref={fileRef} type="file" accept="image/*" multiple onChange={e => handleFiles(e.target.files)} style={{ display: 'none' }} />
+                    {files.length > 1 && (
+                      <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>
+                        💡 All {files.length} pages will be parsed together as one recipe.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
