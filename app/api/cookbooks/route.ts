@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const cookbook: Cookbook = {
       ...body,
-      id: body.id || body.name.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+      id: body.id || body.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
       created_at: body.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString()
     }
